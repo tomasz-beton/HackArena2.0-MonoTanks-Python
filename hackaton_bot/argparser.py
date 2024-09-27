@@ -17,10 +17,9 @@ Arguments
 import argparse
 import sys
 from dataclasses import dataclass
-from typing import Optional
 
 
-@dataclass(frozen=True)
+@dataclass(slots=True, frozen=True)
 class Arguments:
     """Represents the parsed arguments from the command line.
 
@@ -38,7 +37,7 @@ class Arguments:
 
     host: str
     port: int
-    code: Optional[str]
+    code: str | None
     nickname: str
 
 
@@ -51,9 +50,12 @@ def get_args() -> Arguments:
         The parsed arguments from the command line.
     """
 
-    parser = argparse.ArgumentParser(description="Game Client Argument Parser")
+    parser = argparse.ArgumentParser(
+        description="Game Client Argument Parser", add_help=False
+    )
 
     parser.add_argument(
+        "-h",
         "--host",
         type=str,
         default="localhost",
@@ -61,10 +63,15 @@ def get_args() -> Arguments:
     )
 
     parser.add_argument(
-        "--port", type=int, default=5000, help="Port to connect to (default: 5000)"
+        "-p",
+        "--port",
+        type=int,
+        default=5000,
+        help="Port to connect to (default: 5000)",
     )
 
     parser.add_argument(
+        "-c",
         "--code",
         type=str,
         default=None,
@@ -72,7 +79,11 @@ def get_args() -> Arguments:
     )
 
     parser.add_argument(
-        "--nickname", type=str, required=True, help="Player's nickname (required)"
+        "-n",
+        "--nickname",
+        type=str,
+        required=True,
+        help="Player's nickname (required)",
     )
 
     try:

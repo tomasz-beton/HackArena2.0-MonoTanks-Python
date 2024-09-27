@@ -15,11 +15,15 @@ Shoot
 """
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import ClassVar, final
 
-from hackaton_bot.enums import MovementDirection, PacketType
-from hackaton_bot.payloads import (
+from .enums import (
+    MovementDirection,
+    PacketType,
+    RotationDirection,
+)
+from .payloads import (
     ResponseActionPayload,
     TankMovementPayload,
     TankRotationPayload,
@@ -27,11 +31,19 @@ from hackaton_bot.payloads import (
 )
 
 
+__all__ = (
+    "ResponseAction",
+    "Movement",
+    "Rotation",
+    "Shoot",
+)
+
+
 @dataclass(slots=True, frozen=True)
 class ResponseAction(ABC):
     """Base class for response actions."""
 
-    packet_type: PacketType
+    packet_type: PacketType = field(init=False)
 
     @abstractmethod
     def to_payload(self, game_state_id: str) -> ResponseActionPayload:
@@ -40,10 +52,18 @@ class ResponseAction(ABC):
 
 @dataclass(slots=True, frozen=True)
 class Movement(ResponseAction):
-    """Represents a movement response action."""
+    """Represents a movement response action.
 
-    packet_type: ClassVar[PacketType] = PacketType.TANK_MOVEMENT
+    Example
+    -------
+
+    .. code-block:: python
+        from hackaton_bot import Movement, MovementDirection
+        movement = Movement(MovementDirection.FORWARD)
+    """
+
     movement_direction: MovementDirection
+    packet_type: ClassVar[PacketType] = PacketType.TANK_MOVEMENT
 
     @final
     def to_payload(self, game_state_id: str) -> TankMovementPayload:
@@ -52,11 +72,19 @@ class Movement(ResponseAction):
 
 @dataclass(slots=True, frozen=True)
 class Rotation(ResponseAction):
-    """Represents a rotation response action."""
+    """Represents a rotation response action.
 
+    Example
+    -------
+
+    .. code-block:: python
+        from hackaton_bot import Rotation, RotationDirection
+        rotation = Rotation(RotationDirection.LEFT, RotationDirection.RIGHT)
+    """
+
+    tank_rotation_direction: RotationDirection | None
+    turret_rotation_direction: RotationDirection | None
     packet_type: ClassVar[PacketType] = PacketType.TANK_ROTATION
-    tank_rotation_direction: MovementDirection | None
-    turret_rotation_direction: MovementDirection | None
 
     @final
     def to_payload(self, game_state_id: str) -> TankRotationPayload:
@@ -69,7 +97,15 @@ class Rotation(ResponseAction):
 
 @dataclass(slots=True, frozen=True)
 class Shoot(ResponseAction):
-    """Represents a shoot response action."""
+    """Represents a shoot response action.
+
+    Example
+    -------
+
+    .. code-block:: python
+        from hackaton_bot import Shoot
+        shoot = Shoot()
+    """
 
     packet_type: ClassVar[PacketType] = PacketType.TANK_SHOOT
 

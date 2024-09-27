@@ -18,10 +18,7 @@ in an `asyncio` event loop.
 
     import asyncio
 
-    from hackaton_bot.actions import *
-    from hackaton_bot.enums import *
-    from hackaton_bot.hackaton_bot import HackatonBot
-    from hackaton_bot.protocols import *
+    from hackaton_bot import HackatonBot, GameState, GameResult, LobbyData, ResponseAction
 
     class MyBot(HackatonBot):
 
@@ -51,19 +48,18 @@ import humps
 import websockets
 from websockets import WebSocketClientProtocol as WebSocket
 
-from hackaton_bot import argparser
-from hackaton_bot.actions import ResponseAction
-from hackaton_bot.models import Initializer
-from hackaton_bot.enums import PacketType
-from hackaton_bot.payloads import (
+from . import argparser
+from .actions import ResponseAction
+from .enums import PacketType
+from .models import GameStateModel, GameResultModel, LobbyDataModel
+from .payloads import (
     ConnectionRejectedPayload,
     GameEndPayload,
     GameStatePayload,
     LobbyDataPayload,
     Payload,
 )
-
-from hackaton_bot.protocols import GameResult, GameState, LobbyData
+from .protocols import GameState, GameResult, LobbyData
 
 
 class HackatonBot(ABC):
@@ -81,10 +77,8 @@ class HackatonBot(ABC):
     .. code-block:: python
 
         import asyncio
-        from hackaton_bot.actions import *
-        from hackaton_bot.enums import *
-        from hackaton_bot.hackaton_bot import HackatonBot
-        from hackaton_bot.protocols import *
+
+        from hackaton_bot import HackatonBot, GameState, GameResult, LobbyData, ResponseAction
 
         class MyBot(HackatonBot):
 
@@ -107,6 +101,14 @@ class HackatonBot(ABC):
 
     .. code-block:: python
 
+        from hackaton_bot import (
+            Movement,
+            MovementDirection,
+            Rotation,
+            RotationDirection,
+            Shoot,
+        )
+
         async def next_move(self, game_state: GameState) -> ResponseAction:
             return Movement(MovementDirection.FORWARD)
             # or
@@ -115,13 +117,16 @@ class HackatonBot(ABC):
             return Shoot()
     """
 
-    _lobby_data: LobbyData
+    _lobby_data: LobbyDataModel
     _is_processing: bool = False
 
-    @property
-    def _server_url(self) -> str:
-        args = argparser.get_args()
-        return f"ws://{args.host}:{args.port}/?nickname={args.nickname}&playerType=hackatonBot"
+    def _get_server_url(self, args: argparser.Arguments) -> str:
+        url = f"ws://{args.host}:{args.port}/?nickname={args.nickname}&playerType=hackatonBot"
+
+        if args.code:
+            url += f"&joinCode={args.code}"
+
+        return url
 
     @abstractmethod
     async def on_lobby_data_received(self, lobby_data: LobbyData) -> None:
@@ -153,12 +158,18 @@ class HackatonBot(ABC):
 
         .. code-block:: python
 
-            async def next_move(self, game_state: GameState) -> ResponseAction:
-                return Movement(MovementDirection.FORWARD)
-                # or
-                return Rotation(RotationDirection.LEFT, None)
-                # or
-                return Shoot()
+            from hackaton_bot import HackatonBot, GameState, GameResult, LobbyData, ResponseAction
+
+            class MyBot(HackatonBot):
+
+                # Other methods
+
+                async def next_move(self, game_state: GameState) -> ResponseAction:
+                    return Movement(MovementDirection.FORWARD)
+                    # or
+                    return Rotation(RotationDirection.LEFT, None)
+                    # or
+                    return Shoot()
         """
 
     @abstractmethod
@@ -172,12 +183,26 @@ class HackatonBot(ABC):
         """
 
     @final
+    async def _send_packet(
+        self,
+        websocket,
+        packet_type: PacketType,
+        payload: Payload | None = None,
+    ):
+        packet = {"type": packet_type.value}
+
+        if payload:
+            packet["payload"] = humps.camelize(asdict(payload))
+
+        await websocket.send(json.dumps(packet))
+
+    @final
     async def _handle_ping_packet(self, websocket: WebSocket) -> None:
         await self._send_packet(websocket, PacketType.PONG)
 
     @final
     async def _handle_next_move(
-        self, websocket: WebSocket, game_state: GameState
+        self, websocket: WebSocket, game_state: GameStateModel
     ) -> None:
         if self._is_processing:
             print("Skipping next game state due to ongoing processing!")
@@ -214,13 +239,14 @@ class HackatonBot(ABC):
 
         if packet_type == PacketType.GAME_STATE:
             payload = GameStatePayload.from_json(data["payload"])
-            game_state = Initializer.get_game_state(payload, self._lobby_data.my_id)
+            player_id = self._lobby_data.player_id
+            game_state = GameStateModel.from_payload(payload, player_id)
             asyncio.create_task(self._handle_next_move(websocket, game_state))
             return
 
         if packet_type == PacketType.LOBBY_DATA:
             payload = LobbyDataPayload.from_json(data["payload"])
-            lobby_data = Initializer.get_lobby_data(payload)
+            lobby_data = LobbyDataModel.from_payload(payload)
             self._lobby_data = lobby_data
             asyncio.create_task(self.on_lobby_data_received(lobby_data))
             return
@@ -240,7 +266,7 @@ class HackatonBot(ABC):
 
         if packet_type == PacketType.GAME_END:
             payload = GameEndPayload.from_json(data["payload"])
-            game_result = Initializer.get_game_result(payload)
+            game_result = GameResultModel.from_payload(payload)
             asyncio.create_task(self.on_game_ended(game_result))
             return
 
@@ -256,7 +282,7 @@ class HackatonBot(ABC):
         .. code-block:: python
 
             import asyncio
-            from hackaton_bot.hackaton_bot import HackatonBot
+            from hackaton_bot import HackatonBot
 
             class MyBot(HackatonBot):
                 # Your bot implementation here
@@ -266,23 +292,13 @@ class HackatonBot(ABC):
                 asyncio.run(bot.run())
         """
 
-        async with websockets.connect(self._server_url) as websocket:
+        args = argparser.get_args()
+
+        async with websockets.connect(self._get_server_url(args)) as websocket:
             while True:
                 try:
                     message = await websocket.recv()
                     await self._handle_messages(websocket, message)
-                except websockets.exceptions.ConnectionClosedError:
-                    pass
-                except Exception as e:
-                    print(f"An error occurred: {e}")
-                    print(traceback.format_exc())
-
-    async def _send_packet(
-        self, websocket, packet_type: PacketType, payload: Payload | None = None
-    ):
-        packet = {"type": packet_type.value}
-
-        if payload:
-            packet["payload"] = humps.camelize(asdict(payload))
-
-        await websocket.send(json.dumps(packet))
+                except Exception as e:  # pylint: disable=broad-except
+                    print(f"An error occurred: {e}")  # pragma: no cover
+                    print(traceback.format_exc())  # pragma: no cover

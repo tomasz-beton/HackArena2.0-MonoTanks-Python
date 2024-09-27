@@ -1,17 +1,28 @@
+"""This module contains the models used in the library.
+
+For streamlined versions with better documentation
+and only essential fields, refer to the protocols
+which serve as interfaces for these models with enhanced clarity.
+
+Some of the models contain weird attributes like __instancecheck_something__.
+These are used to distinguish between different classes that have the same
+data structure. This is necessary to allow using isinstance() with protocols.
+"""
+
 from __future__ import annotations
 
+from abc import ABC
 from dataclasses import asdict, dataclass
-from typing import Generic, TypeVar, TYPE_CHECKING
+from typing import TYPE_CHECKING
 
 import humps
 
-from hackaton_bot.enums import Direction, ZoneStatus
-from hackaton_bot.payloads import GameEndPayload
-from hackaton_bot.protocols import GameResult, GameState, LobbyData
+from .enums import Direction, ZoneStatus
 
 if TYPE_CHECKING:
-    from hackaton_bot.payloads import (
+    from .payloads import (
         GameStatePayload,
+        GameEndPayload,
         LobbyDataPayload,
         RawMap,
         RawPlayer,
@@ -23,7 +34,9 @@ if TYPE_CHECKING:
 
 
 @dataclass(slots=True, frozen=True)
-class _BasePlayer:
+class PlayerModel:
+    """Represents a player model."""
+
     id: str
     nickname: str
     color: int
@@ -32,7 +45,7 @@ class _BasePlayer:
     ticks_to_regenerate: int | None = None
 
     @classmethod
-    def from_raw(cls, raw: RawPlayer) -> _BasePlayer:
+    def from_raw(cls, raw: RawPlayer) -> PlayerModel:
         """Creates a player from a raw player payload."""
         data = asdict(raw)
         data["ticks_to_regenerate"] = data.pop("ticks_to_regen", None)
@@ -40,13 +53,15 @@ class _BasePlayer:
 
 
 @dataclass(slots=True, frozen=True)
-class _BaseTurret:
+class TurretModel:
+    """Represents a turret model."""
+
     direction: Direction
     bullet_count: int | None = None
     ticks_to_regenerate_bullet: int | None = None
 
     @classmethod
-    def from_raw(cls, raw: RawTurret) -> _BaseTurret:
+    def from_raw(cls, raw: RawTurret) -> TurretModel:
         """Creates a turret from a raw turret payload."""
         data = asdict(raw)
         data["ticks_to_regenerate_bullet"] = data.pop("ticks_to_regen_bullet", None)
@@ -54,39 +69,57 @@ class _BaseTurret:
 
 
 @dataclass(slots=True, frozen=True)
-class _BaseTank:
+class TankModel:
+    """Represents a tank model."""
+
+    __instancecheck_tank__ = True
+
     owner_id: str
     direction: Direction
-    turret: _BaseTurret
+    turret: TurretModel
     health: int | None = None
 
     @classmethod
-    def from_raw(cls, raw: RawTank) -> _BaseTank:
+    def from_raw(cls, raw: RawTank) -> TankModel:
         """Creates a tank from a raw tank payload."""
         data = asdict(raw)
-        data["turret"] = _BaseTurret.from_raw(raw.turret)
+        data["turret"] = TurretModel.from_raw(raw.turret)
         return cls(**data)
 
 
 @dataclass(slots=True, frozen=True)
-class _BaseWall:
-    pass
+class AgentTankModel(TankModel):
+    """Represents an agent tank model."""
+
+    __instancecheck_agenttank__ = True
 
 
 @dataclass(slots=True, frozen=True)
-class _BaseBullet:
+class WallModel:
+    """Represents a wall model."""
+
+    __instancecheck_wall__ = True
+
+
+@dataclass(slots=True, frozen=True)
+class BulletModel:
+    """Represents a bullet model."""
+
+    __instancecheck_bullet__ = True
+
     id: int
     speed: float
     direction: Direction
 
     @classmethod
-    def from_raw(cls, raw: dict) -> _BaseBullet:
+    def from_raw(cls, raw: dict) -> BulletModel:
         """Creates a bullet from a raw bullet payload."""
         return cls(**asdict(raw))
 
 
 @dataclass(slots=True, frozen=True)
-class _Zone:
+class ZoneModel(ABC):
+    """Represents a zone model."""
 
     x: int
     y: int
@@ -100,46 +133,101 @@ class _Zone:
     remaining_ticks: int | None = None
 
     @classmethod
-    def from_raw(cls, raw: RawZone) -> _Zone:
+    def from_raw(cls, raw: RawZone) -> ZoneModel:
         """Creates a zone from a raw zone payload."""
         data = asdict(raw)
-        data["status"] = ZoneStatus(humps.decamelize(data["status"]).upper())
-        return cls(**data)
+        status = ZoneStatus(humps.decamelize(data["status"]).upper())
+        data["status"] = status
+
+        if status == ZoneStatus.NEUTRAL:
+            zone = NeutralZoneModel
+        elif status == ZoneStatus.BEING_CAPTURED:
+            zone = BeingCapturedZoneModel
+        elif status == ZoneStatus.CAPTURED:
+            zone = CapturedZoneModel
+        elif status == ZoneStatus.BEING_CONTESTED:
+            zone = BeingContestedZoneModel
+        elif status == ZoneStatus.BEING_RETAKEN:
+            zone = BeingRetakenZoneModel
+
+        return zone(**data)
 
 
 @dataclass(slots=True, frozen=True)
-class _LobbyData:
-    my_id: str
-    players: tuple[_BasePlayer]
+class NeutralZoneModel(ZoneModel):
+    """Represents a neutral zone model."""
+
+    __instancecheck_neutralzone__ = True
+
+
+@dataclass(slots=True, frozen=True)
+class BeingCapturedZoneModel(ZoneModel):
+    """Represents a zone model that is being captured."""
+
+    __instancecheck_beingcapturedzone__ = True
+
+
+@dataclass(slots=True, frozen=True)
+class CapturedZoneModel(ZoneModel):
+    """Represents a captured zone model."""
+
+    __instancecheck_capturedzone__ = True
+
+
+@dataclass(slots=True, frozen=True)
+class BeingContestedZoneModel(ZoneModel):
+    """Represents a zone model that is being contested."""
+
+    __instancecheck_beingcontestedzone__ = True
+
+
+@dataclass(slots=True, frozen=True)
+class BeingRetakenZoneModel(ZoneModel):
+    """Represents a zone model that is being retaken."""
+
+    __instancecheck_beingretakenzone__ = True
+
+
+@dataclass(slots=True, frozen=True)
+class LobbyDataModel:
+    """Represents the lobby data model."""
+
+    player_id: str
+    players: tuple[PlayerModel]
     server_settings: ServerSettings
 
     @classmethod
-    def from_payload(cls, payload: LobbyDataPayload) -> _LobbyData:
+    def from_payload(cls, payload: LobbyDataPayload) -> LobbyDataModel:
         """Creates a lobby data from a lobby data payload."""
-        players = tuple(_BasePlayer.from_raw(p) for p in payload.players)
+        players = tuple(PlayerModel.from_raw(p) for p in payload.players)
         return cls(payload.player_id, players, payload.server_settings)
 
 
-_TileT = TypeVar("_TileT", _BaseTank, _BaseWall, _BaseBullet, None)
+if TYPE_CHECKING:
+    TileEntity = TankModel | WallModel | BulletModel
 
 
 @dataclass(slots=True, frozen=True)
-class _Tile(Generic[_TileT]):
-    obj: _TileT | None
-    zone: _Zone | None
+class TileModel:
+    """Represents a tile model on the map."""
+
+    entity: TileEntity | None
+    zone: ZoneModel | None
     is_visible: bool
 
 
 @dataclass(slots=True, frozen=True)
-class _Map:
-    tiles: tuple[tuple[_Tile]]
-    zones: tuple[_Zone]
+class MapModel:
+    """Represents a map model."""
+
+    tiles: tuple[tuple[TileModel]]
+    zones: tuple[ZoneModel]
     visibility: tuple[str]
 
     @classmethod
-    def from_raw(cls, raw: RawMap) -> _Map:
+    def from_raw(cls, raw: RawMap, agent_id: str) -> MapModel:
         """Creates a map from a raw map payload."""
-        zones = tuple(_Zone.from_raw(z) for z in raw.zones)
+        zones = tuple(ZoneModel.from_raw(z) for z in raw.zones)
 
         tiles = []
         for x, row in enumerate(raw.tiles):
@@ -149,15 +237,20 @@ class _Map:
                 if obj is None:
                     tile_obj = None
                 elif obj.type == "tank":
-                    tile_obj = _BaseTank.from_raw(obj.entity)
+                    raw_tank: RawTank = obj.entity
+                    owner_id = raw_tank.owner_id
+                    if owner_id == agent_id:
+                        tile_obj = AgentTankModel.from_raw(obj.entity)
+                    else:
+                        tile_obj = TankModel.from_raw(obj.entity)
                 elif obj.type == "wall":
-                    tile_obj = _BaseWall()
+                    tile_obj = WallModel()
                 elif obj.type == "bullet":
-                    tile_obj = _BaseBullet.from_raw(obj.entity)
+                    tile_obj = BulletModel.from_raw(obj.entity)
                 else:
                     raise ValueError(f"Unknown tile type: {obj.type}")
 
-                is_visible = raw.visibility[x][y] == "1"
+                is_visible = raw.visibility[y][x] == "1"
                 zone = next(
                     (
                         z
@@ -166,26 +259,27 @@ class _Map:
                     ),
                     None,
                 )
-                tab.append(_Tile(tile_obj, zone, is_visible))
+                tab.append(TileModel(tile_obj, zone, is_visible))
             tiles.append(tuple(tab))
 
-        return _Map(tuple(tiles), tuple(zones), raw.visibility)
+        return MapModel(tuple(tiles), tuple(zones), raw.visibility)
 
 
 @dataclass(slots=True, frozen=True)
-class _GameState:
+class GameStateModel:
+    """Represents a game state model."""
 
     id: str
     tick: int
-    my_agent: _BasePlayer
-    players: tuple[_BasePlayer]
-    map: _Map
+    my_agent: PlayerModel
+    players: tuple[PlayerModel]
+    map: MapModel
 
     @classmethod
-    def from_payload(cls, payload: GameStatePayload, agent_id: str) -> _GameState:
+    def from_payload(cls, payload: GameStatePayload, agent_id: str) -> GameStateModel:
         """Creates a game state from a game state payload."""
 
-        players = [_BasePlayer.from_raw(p) for p in payload.players]
+        players = [PlayerModel.from_raw(p) for p in payload.players]
         agent = next(p for p in players if p.id == agent_id)
 
         return cls(
@@ -193,36 +287,18 @@ class _GameState:
             tick=payload.tick,
             my_agent=agent,
             players=players,
-            map=_Map.from_raw(payload.map),
+            map=MapModel.from_raw(payload.map, agent.id),
         )
 
 
 @dataclass(slots=True, frozen=True)
-class _GameResult:
+class GameResultModel:
+    """Represents the game results model."""
 
-    players: tuple[_BasePlayer]
+    players: tuple[PlayerModel]
 
     @classmethod
-    def from_payload(cls, payload: GameEndPayload) -> _GameResult:
+    def from_payload(cls, payload: GameEndPayload) -> GameResultModel:
         """Creates game results from a game end payload."""
-        players = tuple(_BasePlayer.from_raw(p) for p in payload.players)
+        players = tuple(PlayerModel.from_raw(p) for p in payload.players)
         return cls(players)
-
-
-class Initializer:
-    """Initializes the game models from the raw payloads."""
-
-    @staticmethod
-    def get_game_state(payload: GameStatePayload, agent_id: str) -> GameState:
-        """Creates a game state from a game state payload."""
-        return _GameState.from_payload(payload, agent_id)
-
-    @staticmethod
-    def get_lobby_data(payload: LobbyDataPayload) -> LobbyData:
-        """Creates a lobby data from a lobby data payload."""
-        return _LobbyData.from_payload(payload)
-
-    @staticmethod
-    def get_game_result(payload: GameEndPayload) -> GameResult:
-        """Creates game result from a game end payload."""
-        return _GameResult.from_payload(payload)

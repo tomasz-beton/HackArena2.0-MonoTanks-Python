@@ -1,9 +1,12 @@
 import asyncio
 
-from hackaton_bot.actions import *
-from hackaton_bot.enums import *
-from hackaton_bot.hackaton_bot import HackatonBot
-from hackaton_bot.protocols import *
+from hackaton_bot import (
+    HackatonBot,
+    LobbyData,
+    GameState,
+    GameResult,
+    ResponseAction,
+)
 
 
 class MyBot(HackatonBot):

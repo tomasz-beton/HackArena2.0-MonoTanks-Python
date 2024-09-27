@@ -47,20 +47,41 @@ GameResult
 
 Notes
 -----
-This module provides protocols for type hints.
-
 Protocols are used to provide type hints for the classes
 in the game state, lobby data, and game result.
 """
 
 from __future__ import annotations
 
-from typing import Protocol, Sequence, TypeVar, TYPE_CHECKING
+from typing import Protocol, Sequence, TYPE_CHECKING, runtime_checkable
 
 if TYPE_CHECKING:
     from hackaton_bot.enums import Direction, ZoneStatus
 
-    TileT = TypeVar("TileT", "Wall", "Bullet", "PlayerTank", "AgentTank", None)
+
+__all__ = (
+    "ServerSettings",
+    "GameStatePlayer",
+    "LobbyPlayer",
+    "GameEndPlayer",
+    "Agent",
+    "PlayerTurret",
+    "AgentTurret",
+    "PlayerTank",
+    "AgentTank",
+    "Wall",
+    "Bullet",
+    "LobbyData",
+    "Zone",
+    "NeutralZone",
+    "BeingCapturedZone",
+    "CapturedZone",
+    "BeingContestedZone",
+    "BeingRetakenZone",
+    "Map",
+    "GameState",
+    "GameResult",
+)
 
 
 class ServerSettings(Protocol):
@@ -318,6 +339,7 @@ class AgentTurret(Protocol):
         """
 
 
+@runtime_checkable
 class PlayerTank(Protocol):
     """Represents a tank of a player.
 
@@ -336,6 +358,8 @@ class PlayerTank(Protocol):
     the tank of a player.
     """
 
+    __instancecheck_tank__: bool
+
     @property
     def owner_id(self) -> str:
         """The unique identifier of the owner."""
@@ -349,6 +373,7 @@ class PlayerTank(Protocol):
         """The turret of the tank."""
 
 
+@runtime_checkable
 class AgentTank(Protocol):
     """Represents a tank of your agent.
 
@@ -370,6 +395,9 @@ class AgentTank(Protocol):
     the tank of your agent.
     """
 
+    __instancecheck_tank__: bool
+    __instancecheck_agenttank__: bool
+
     @property
     def owner_id(self) -> str:
         """Your unique identifier."""
@@ -390,6 +418,7 @@ class AgentTank(Protocol):
         """
 
 
+@runtime_checkable
 class Wall(Protocol):
     """Represents a wall in the game.
 
@@ -399,7 +428,10 @@ class Wall(Protocol):
     the wall in the game.
     """
 
+    __instancecheck_wall__: bool
 
+
+@runtime_checkable
 class Bullet(Protocol):
     """Represents a bullet in the game.
 
@@ -418,9 +450,19 @@ class Bullet(Protocol):
     the bullet in the game.
     """
 
-    id: int
-    speed: float
-    direction: Direction
+    __instancecheck_bullet__: bool
+
+    @property
+    def id(self) -> int:
+        """The unique identifier of the bullet."""
+
+    @property
+    def speed(self) -> float:
+        """The speed of the bullet."""
+
+    @property
+    def direction(self) -> Direction:
+        """The direction of the bullet."""
 
 
 class LobbyData(Protocol):
@@ -464,19 +506,27 @@ class Zone(Protocol):
     - :class:`BeingContestedZone`
     - :class:`BeingRetakenZone`
 
-    To check the current state of a zone,
-    refer to its status property.
+    There are two recommended ways to check the type of the zone:
 
-    You can access additional attributes of a zone
-    depending on its type by following this pattern:
+    1. Using the `isinstance` function.
+
+    .. code-block:: python
+        if isinstance(zone, NeutralZone):
+            # The zone is a neutral zone.
+        elif isinstance(zone, BeingCapturedZone):
+            # The zone is being captured.
+            >>> zone.remaining_ticks  # Access the remaining ticks to capture the zone.
+        # etc.
+
+    2. Using the `status` attribute and casting the zone to the corresponding type.
 
     .. code-block:: python
         if zone.status is ZoneStatus.NEUTRAL:
             zone_neutral: NeutralZone = zone
         elif zone.status is ZoneStatus.BEING_CAPTURED:
             zone_captured: BeingCapturedZone = zone
-            zone_captured.remaining_ticks
-        elif # ...
+            >> zone.remaining_ticks  # Access the remaining ticks to capture the zone.
+        # etc.
 
     Attributes
     ----------
@@ -524,8 +574,24 @@ class Zone(Protocol):
         """The status of the zone."""
 
 
+@runtime_checkable
 class NeutralZone(Zone, Protocol):
     """Represents a neutral zone in the game.
+
+    Attributes
+    ----------
+    x: :class:`int`
+        The x-coordinate of the zone.
+    y: :class:`int`
+        The y-coordinate of the zone.
+    width: :class:`int`
+        The width of the zone.
+    height: :class:`int`
+        The height of the zone.
+    index: :class:`int`
+        The index of the zone.
+    status: :class:`ZoneStatus`
+        The status of the zone.
 
     Notes
     -----
@@ -533,12 +599,27 @@ class NeutralZone(Zone, Protocol):
     the neutral zone in the game.
     """
 
+    __instancecheck_neutralzone__: bool
 
+
+@runtime_checkable
 class BeingCapturedZone(Zone, Protocol):
     """Represents a zone being captured in the game.
 
     Attributes
     ----------
+    x: :class:`int`
+        The x-coordinate of the zone.
+    y: :class:`int`
+        The y-coordinate of the zone.
+    width: :class:`int`
+        The width of the zone.
+    height: :class:`int`
+        The height of the zone.
+    index: :class:`int`
+        The index of the zone.
+    status: :class:`ZoneStatus`
+        The status of the zone.
     player_id: :class:`str`
         The unique identifier of the player capturing the zone.
     remaining_ticks: :class:`int`
@@ -550,6 +631,8 @@ class BeingCapturedZone(Zone, Protocol):
     the zone being captured in the game.
     """
 
+    __instancecheck_beingcapturedzone__: bool
+
     @property
     def player_id(self) -> str:
         """The unique identifier of the player capturing the zone."""
@@ -559,11 +642,24 @@ class BeingCapturedZone(Zone, Protocol):
         """The remaining ticks to capture the zone."""
 
 
+@runtime_checkable
 class CapturedZone(Zone, Protocol):
     """Represents a captured zone in the game.
 
     Attributes
     ----------
+    x: :class:`int`
+        The x-coordinate of the zone.
+    y: :class:`int`
+        The y-coordinate of the zone.
+    width: :class:`int`
+        The width of the zone.
+    height: :class:`int`
+        The height of the zone.
+    index: :class:`int`
+        The index of the zone.
+    status: :class:`ZoneStatus`
+        The status of the zone.
     player_id: :class:`str`
         The unique identifier of the player capturing the zone.
 
@@ -573,16 +669,31 @@ class CapturedZone(Zone, Protocol):
     the captured zone in the game.
     """
 
+    __instancecheck_capturedzone__: bool
+
     @property
     def player_id(self) -> str:
         """The unique identifier of the player capturing the zone."""
 
 
+@runtime_checkable
 class BeingContestedZone(Zone, Protocol):
     """Represents a zone being contested in the game.
 
     Attributes
     ----------
+    x: :class:`int`
+        The x-coordinate of the zone.
+    y: :class:`int`
+        The y-coordinate of the zone.
+    width: :class:`int`
+        The width of the zone.
+    height: :class:`int`
+        The height of the zone.
+    index: :class:`int`
+        The index of the zone.
+    status: :class:`ZoneStatus`
+        The status of the zone.
     captured_by_id: :class:`str` | `None`
         The unique identifier of the player capturing
         the zone if any. Otherwise, `None`.
@@ -593,6 +704,8 @@ class BeingContestedZone(Zone, Protocol):
     the zone being contested in the game.
     """
 
+    __instancecheck_beingcontestedzone__: bool
+
     @property
     def captured_by_id(self) -> str | None:
         """The unique identifier of the player capturing the zone if any.
@@ -601,11 +714,24 @@ class BeingContestedZone(Zone, Protocol):
         """
 
 
+@runtime_checkable
 class BeingRetakenZone(Zone, Protocol):
     """Represents a zone being retaken in the game.
 
     Attributes
     ----------
+    x: :class:`int`
+        The x-coordinate of the zone.
+    y: :class:`int`
+        The y-coordinate of the zone.
+    width: :class:`int`
+        The width of the zone.
+    height: :class:`int`
+        The height of the zone.
+    index: :class:`int`
+        The index of the zone.
+    status: :class:`ZoneStatus`
+        The status of the zone.
     captured_by_id: :class:`str`
         The unique identifier of the player capturing the zone.
     retaken_by_id: :class:`str`
@@ -618,6 +744,8 @@ class BeingRetakenZone(Zone, Protocol):
     This class is a protocol to provide type hints for
     the zone being retaken in the game.
     """
+
+    __instancecheck_beingretakenzone__: bool
 
     @property
     def captured_by_id(self) -> str:
@@ -632,6 +760,102 @@ class BeingRetakenZone(Zone, Protocol):
         """The remaining ticks to retake the zone."""
 
 
+if TYPE_CHECKING:
+    TileEntity = PlayerTank | AgentTank | Wall | Bullet
+
+
+class Tile(Protocol):
+    """Represents a tile of the map.
+
+    Attributes
+    ----------
+    entity: :class:`TileEntity` | `None`
+        The entity present on the tile.
+    zone: :class:`Zone` | `None`
+        The zone in the tile.
+    is_visible: :class:`bool`
+        Whether the tile is visible.
+    """
+
+    @property
+    def entity(self) -> TileEntity | None:
+        """The entity present on this tile.
+
+        The entity can be one of the following tyypes:
+        - :class:`Wall`
+        - :class:`Bullet`
+        - :class:`PlayerTank`
+        - :class:`AgentTank`
+
+        If the tile does not contain an entity,
+        this property is `None`.
+
+        Examples
+        --------
+
+        To check the type of the entity in the tile,
+        use the `isinstance` function.
+
+        .. code-block:: python
+            entity = tile.entity
+
+            if isinstance(entity, Wall):
+                # The entity is a wall.
+            elif isinstance(entity, Bullet):
+                # The entity is a bullet.
+            elif isinstance(entity, PlayerTank):
+                # The entity is a tank.
+                # Warning: This includes both your agent's tank and other player tanks.
+                # See the important notes below.
+
+        Important Notes
+        ---------------
+
+        Be careful when distinguishing between your agent's tank and other player tanks.
+
+        Since your agent's tank is also an instance of `PlayerTank`, it can mistakenly
+        match both types.
+
+        For example:
+
+        .. code-block:: python
+
+            tile: Tile
+            tile.entity: AgentTank
+
+            >>> isinstance(tile.entity, PlayerTank)  # True (!)
+
+        To accurately distinguish between them, follow this pattern:
+
+        .. code-block:: python
+
+            tile: Tile
+            entity = tile.entity
+
+            if isinstance(entity, AgentTank):
+                # The entity is your agent’s tank.
+            elif isinstance(entity, PlayerTank):
+                # The entity is another player's tank.
+
+        Using `elif` ensures that only one condition is triggered, allowing you
+        to differentiate between the two tank types properly.
+        """
+
+    @property
+    def zone(self) -> Zone | None:
+        """The zone in the tile.
+
+        If the tile does not contain a zone,
+        this property is `None`.
+        """
+
+    @property
+    def is_visible(self) -> bool:
+        """Whether the tile is visible
+        from your agent's perspective.
+        """
+
+
 class Map(Protocol):
     """Represents the map of the game state.
 
@@ -641,30 +865,16 @@ class Map(Protocol):
         The tiles of the map in a 2D tuple,
         where the first index is the x-coordinate
         and the second index is the y-coordinate.
-
-        Each tile can be one of the following:
-        - :class:`Wall`
-        - :class:`Bullet`
-        - :class:`PlayerTank`
-        - :class:`AgentTank`
-        - `None`
     zones: Sequence[:class:`Zone`]
         The zones on the map.
     """
 
     @property
-    def tiles(self) -> tuple[tuple[TileT]]:
+    def tiles(self) -> tuple[tuple[Tile]]:
         """The tiles of the map in a 2D tuple.
 
         The first index is the x-coordinate
         and the second index is the y-coordinate.
-
-        Each tile can be one of the following:
-        - :class:`Wall`
-        - :class:`Bullet`
-        - :class:`PlayerTank`
-        - :class:`AgentTank`
-        - `None`
         """
 
     @property

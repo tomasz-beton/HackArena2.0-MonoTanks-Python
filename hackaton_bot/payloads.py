@@ -2,63 +2,14 @@
 
 This module contains the payloads that are used to represent the data
 that is sent and received between the client and the server.
-
-Classes
--------
-ServerSettings
-    Represents the server settings.
-RawPlayer
-    Represents a raw player data.
-RawMap
-    Represents a raw map data.
-RawTileObject
-    Represents a raw tile object data.
-RawTileEntity
-    Represents a raw tile entity data.
-RawWall
-    Represents a raw wall data.
-RawBullet
-    Represents a raw bullet data.
-RawTank
-    Represents a raw tank data.
-RawTurret
-    Represents a raw turret data.
-RawZone
-    Represents a raw zone data.
-Payload
-    Represents a payload that can be attached to a packet.
-ConnectionRejectedPayload
-    Represents a CONNECTION_REJECTED payload.
-LobbyDataPayload
-    Represents a LOBBY_DATA payload.
-GameStatePayload
-    Represents a GAME_STATE payload.
-GameEndPayload
-    Represents a GAME_END payload.
-ResponseActionPayload
-    Represents a response action payload.
-TankMovementPayload
-    Represents a TANK_MOVEMENT payload.
-TankRotationPayload
-    Represents a TANK_ROTATION payload.
-TankShootPayload
-    Represents a TANK_SHOOT payload.
 """
 
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
 import humps
-
-
-if TYPE_CHECKING:
-    from hackaton_bot.enums import (
-        MovementDirection,
-        RotationDirection,
-    )
 
 
 @dataclass(slots=True, frozen=True)
@@ -94,7 +45,7 @@ class RawPlayer:
 class RawMap:
     """Represents a raw map data."""
 
-    tiles: tuple[tuple[tuple[RawTileObject]]]
+    tiles: tuple[tuple[tuple[RawTileObject | None]]]
     zones: tuple[RawZone]
     visibility: tuple[str]
 
@@ -109,6 +60,7 @@ class RawMap:
         json_data["zones"] = tuple(
             RawZone.from_json(zone) for zone in json_data["zones"]
         )
+        json_data["visibility"] = tuple(json_data["visibility"])
         return cls(**json_data)
 
 
@@ -117,7 +69,7 @@ class RawTileObject:
     """Represents a raw tile object data."""
 
     type: str
-    entity: RawTileEntity | None
+    entity: RawTileEntity
 
     @classmethod
     def from_json(cls, json_data: dict) -> RawTileObject:
@@ -131,9 +83,9 @@ class RawTileObject:
         if payload_class is None or not issubclass(payload_class, RawTileEntity):
             raise ValueError(f"Unknown tile object class: {payload_class_name}")
 
-        payload = payload_class.from_json(json_data.get("payload", {}))
+        entity = payload_class.from_json(json_data.get("payload", {}))
 
-        return cls(obj_type, payload)
+        return cls(obj_type, entity)
 
 
 @dataclass(slots=True, frozen=True)
@@ -192,14 +144,11 @@ class RawTurret:
 
     direction: int
     bullet_count: int | None = None
-    ticks_to_regenerate_bullet: int | None = None
+    ticks_to_regen_bullet: int | None = None
 
     @classmethod
     def from_json(cls, json_data: dict) -> RawTurret:
         """Creates a RawTurret from a JSON dictionary."""
-        json_data["ticks_to_regenerate_bullet"] = json_data.pop(
-            "ticks_to_regen_bullet", None
-        )
         return cls(**json_data)
 
 
@@ -309,15 +258,15 @@ class ResponseActionPayload(Payload, ABC):
 class TankMovementPayload(ResponseActionPayload):
     """Represents a TANK_MOVEMENT payload."""
 
-    direction: MovementDirection
+    direction: int
 
 
 @dataclass(slots=True, frozen=True)
 class TankRotationPayload(ResponseActionPayload):
     """Represents a TANK_ROTATION payload."""
 
-    tank_rotation: RotationDirection | None
-    turret_rotation: RotationDirection | None
+    tank_rotation: int | None
+    turret_rotation: int | None
 
 
 @dataclass(slots=True, frozen=True)
