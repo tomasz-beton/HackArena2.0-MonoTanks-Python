@@ -1,49 +1,9 @@
 """A module that contains the protocols used in the library.
 
-Protocols
----------
-ServerSettings
-    Represents the server settings.
-GameStatePlayer
-    Represents a player in the game state.
-LobbyPlayer
-    Represents a player in the lobby.
-GameEndPlayer
-    Represents a player in the game result.
-Agent
-    Represents the hackaton bot in the game state.
-PlayerTurret
-    Represents a turret of a player's tank.
-AgentTurret
-    Represents a turret of the hackaton bot's tank.
-PlayerTank
-    Represents a tank of a player.
-AgentTank
-    Represents a tank of the hackaton bot.
-Wall
-    Represents a wall in the game.
-Bullet
-    Represents a bullet in the game.
-LobbyData
-    Represents the lobby data.
-Zone
-    Represents a zone in the game.
-NeutralZone
-    Represents a neutral zone in the game.
-BeingCapturedZone
-    Represents a zone being captured in the game.
-CapturedZone
-    Represents a captured zone in the game.
-BeingContestedZone
-    Represents a zone being contested in the game.
-BeingRetakenZone
-    Represents a zone being retaken in the game.
-Map
-    Represents the map of the game state.
-GameState
-    Represents the game state.
-GameResult
-    Represents the game result.
+Some of the protocols contain weird attributes like __instancecheck_something__.
+These are used to distinguish between different classes that have the same
+data structure. This is necessary to enable isinstance() to be used with protocols.
+To take advantage of this, the models should have the same weird attribute as the protocol.
 
 Notes
 -----
@@ -276,6 +236,22 @@ class Agent(GameStatePlayer, Protocol):
     This class is a protocol to provide type hints
     for the agent in the game state.
     """
+
+    @property
+    def id(self) -> str:
+        """Your unique identifier."""
+
+    @property
+    def nickname(self) -> str:
+        """Your nickname."""
+
+    @property
+    def color(self) -> int:
+        """Your color in format `0xAABBGGRR`."""
+
+    @property
+    def score(self) -> int:
+        """Your score."""
 
     @property
     def ticks_to_regenerate(self) -> int | None:

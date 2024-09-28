@@ -196,6 +196,11 @@ class LobbyDataModel:
     players: tuple[PlayerModel]
     server_settings: ServerSettings
 
+    @property
+    def my_id(self) -> str:
+        """Your player ID."""
+        return self.player_id
+
     @classmethod
     def from_payload(cls, payload: LobbyDataPayload) -> LobbyDataModel:
         """Creates a lobby data from a lobby data payload."""
