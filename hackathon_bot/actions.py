@@ -58,7 +58,7 @@ class Movement(ResponseAction):
     -------
 
     .. code-block:: python
-        from hackaton_bot import Movement, MovementDirection
+        from hackathon_bot import Movement, MovementDirection
         movement = Movement(MovementDirection.FORWARD)
     """
 
@@ -78,7 +78,7 @@ class Rotation(ResponseAction):
     -------
 
     .. code-block:: python
-        from hackaton_bot import Rotation, RotationDirection
+        from hackathon_bot import Rotation, RotationDirection
         rotation = Rotation(RotationDirection.LEFT, RotationDirection.RIGHT)
     """
 
@@ -103,7 +103,7 @@ class Shoot(ResponseAction):
     -------
 
     .. code-block:: python
-        from hackaton_bot import Shoot
+        from hackathon_bot import Shoot
         shoot = Shoot()
     """
 

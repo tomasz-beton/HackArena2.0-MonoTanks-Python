@@ -16,7 +16,7 @@ from __future__ import annotations
 from typing import Protocol, Sequence, TYPE_CHECKING, runtime_checkable
 
 if TYPE_CHECKING:
-    from hackaton_bot.enums import Direction, ZoneStatus
+    from hackathon_bot.enums import Direction, ZoneStatus
 
 
 __all__ = (
@@ -105,7 +105,7 @@ class ServerSettings(Protocol):
         This allows for a shorter waiting time for the next broadcast
         if all agents respond to the latest game state.
 
-        As a **participant of Hackaton**, you can **ignore this**.
+        As a **participant of Hackathon**, you can **ignore this**.
         """
 
 
@@ -889,7 +889,7 @@ class GameState(Protocol):
         This allows for a shorter waiting time for the next
         broadcast if all agents respond to the latest game state.
 
-        As a **participant of Hackaton**, you can **ignore this**.
+        As a **participant of Hackathon**, you can **ignore this**.
         Attaching the identifier to the response payload is done by
         this library automatically.
         """

@@ -1,16 +1,16 @@
-"""The main module for the hackaton bot.
+"""The main module for the hackathon bot.
 
-This module contains the main class for the hackaton bot.
+This module contains the main class for the hackathon bot.
 
 Classes
 -------
-HackatonBot
-    Represents the hackaton bot.
+HackathonBot
+    Represents the hackathon bot.
 
 Examples
 --------
-To run the hackaton bot, create a new class that inherits
-from the `HackatonBot` class and implement the required methods.
+To run the hackathon bot, create a new class that inherits
+from the `HackathonBot` class and implement the required methods.
 Then, create an instance of the bot and run it using the `run` method
 in an `asyncio` event loop.
 
@@ -18,9 +18,9 @@ in an `asyncio` event loop.
 
     import asyncio
 
-    from hackaton_bot import HackatonBot, GameState, GameResult, LobbyData, ResponseAction
+    from hackathon_bot import HackathonBot, GameState, GameResult, LobbyData, ResponseAction
 
-    class MyBot(HackatonBot):
+    class MyBot(HackathonBot):
 
         async def on_lobby_data_received(self, lobby_data: LobbyData) -> None:
             # Implement the lobby data received logic here
@@ -62,15 +62,15 @@ from .payloads import (
 from .protocols import GameState, GameResult, LobbyData
 
 
-class HackatonBot(ABC):
-    """Represents the hackaton bot.
+class HackathonBot(ABC):
+    """Represents the hackathon bot.
 
-    This class is used to create a new hackaton bot.
+    This class is used to create a new hackathon bot.
 
     Examples
     --------
-    To run the hackaton bot, create a new class that inherits
-    from the `HackatonBot` class and implement the required methods.
+    To run the hackathon bot, create a new class that inherits
+    from the `HackathonBot` class and implement the required methods.
     Then, create an instance of the bot and run it using the `run` method
     in an `asyncio` event loop.
 
@@ -78,9 +78,9 @@ class HackatonBot(ABC):
 
         import asyncio
 
-        from hackaton_bot import HackatonBot, GameState, GameResult, LobbyData, ResponseAction
+        from hackathon_bot import HackathonBot, GameState, GameResult, LobbyData, ResponseAction
 
-        class MyBot(HackatonBot):
+        class MyBot(HackathonBot):
 
             async def on_lobby_data_received(self, lobby_data: LobbyData) -> None:
                 # Implement the lobby data received logic here
@@ -101,7 +101,7 @@ class HackatonBot(ABC):
 
     .. code-block:: python
 
-        from hackaton_bot import (
+        from hackathon_bot import (
             Movement,
             MovementDirection,
             Rotation,
@@ -121,7 +121,7 @@ class HackatonBot(ABC):
     _is_processing: bool = False
 
     def _get_server_url(self, args: argparser.Arguments) -> str:
-        url = f"ws://{args.host}:{args.port}/?nickname={args.nickname}&playerType=hackatonBot"
+        url = f"ws://{args.host}:{args.port}/?nickname={args.nickname}&playerType=hackathonBot"
 
         if args.code:
             url += f"&joinCode={args.code}"
@@ -158,9 +158,9 @@ class HackatonBot(ABC):
 
         .. code-block:: python
 
-            from hackaton_bot import HackatonBot, GameState, GameResult, LobbyData, ResponseAction
+            from hackathon_bot import HackathonBot, GameState, GameResult, LobbyData, ResponseAction
 
-            class MyBot(HackatonBot):
+            class MyBot(HackathonBot):
 
                 # Other methods
 
@@ -272,7 +272,7 @@ class HackatonBot(ABC):
 
     @final
     async def run(self) -> None:
-        """Connects to the server and runs the hackaton bot.
+        """Connects to the server and runs the hackathon bot.
 
         This method must be called using the `asyncio.run` function.
 
@@ -282,9 +282,9 @@ class HackatonBot(ABC):
         .. code-block:: python
 
             import asyncio
-            from hackaton_bot import HackatonBot
+            from hackathon_bot import HackathonBot
 
-            class MyBot(HackatonBot):
+            class MyBot(HackathonBot):
                 # Your bot implementation here
 
             if __name__ == "__main__":

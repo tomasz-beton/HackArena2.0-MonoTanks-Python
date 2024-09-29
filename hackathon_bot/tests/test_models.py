@@ -2,8 +2,8 @@
 
 import pytest
 
-from hackaton_bot.enums import Direction, ZoneStatus
-from hackaton_bot.models import (
+from hackathon_bot.enums import Direction, ZoneStatus
+from hackathon_bot.models import (
     BulletModel,
     PlayerModel,
     TankModel,
@@ -16,7 +16,7 @@ from hackaton_bot.models import (
     MapModel,
     TileModel,
 )
-from hackaton_bot.payloads import (
+from hackathon_bot.payloads import (
     GameEndPayload,
     GameStatePayload,
     LobbyDataPayload,

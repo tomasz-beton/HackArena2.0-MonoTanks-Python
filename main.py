@@ -1,7 +1,7 @@
 import asyncio
 
-from hackaton_bot import (
-    HackatonBot,
+from hackathon_bot import (
+    HackathonBot,
     LobbyData,
     GameState,
     GameResult,
@@ -9,7 +9,7 @@ from hackaton_bot import (
 )
 
 
-class MyBot(HackatonBot):
+class MyBot(HackathonBot):
 
     async def on_lobby_data_received(self, lobby_data: LobbyData) -> None:
         pass

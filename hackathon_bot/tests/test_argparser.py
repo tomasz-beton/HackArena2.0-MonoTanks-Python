@@ -3,7 +3,7 @@
 import sys
 
 import pytest
-from hackaton_bot import argparser
+from hackathon_bot import argparser
 
 
 def test_get_args(monkeypatch: pytest.MonkeyPatch):

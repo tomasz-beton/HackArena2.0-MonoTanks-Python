@@ -14,16 +14,16 @@ combinations of similar model applications.
 
 import pytest
 
-from hackaton_bot import models
-from hackaton_bot.enums import Direction, ZoneStatus
-from hackaton_bot.models import (
+from hackathon_bot import models
+from hackathon_bot.enums import Direction, ZoneStatus
+from hackathon_bot.models import (
     AgentTankModel,
     WallModel,
     ZoneModel,
     BulletModel,
 )
-from hackaton_bot.payloads import RawZone
-from hackaton_bot.protocols import (
+from hackathon_bot.payloads import RawZone
+from hackathon_bot.protocols import (
     BeingCapturedZone,
     BeingContestedZone,
     BeingRetakenZone,

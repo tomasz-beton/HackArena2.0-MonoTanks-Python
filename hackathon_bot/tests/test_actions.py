@@ -1,7 +1,7 @@
 """Tests for the actions module."""
 
 import pytest
-from hackaton_bot import (
+from hackathon_bot import (
     Movement,
     Rotation,
     Shoot,

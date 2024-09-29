@@ -1,9 +1,9 @@
 """
-Framework for creating a bot for Hackaton 2024
+Framework for creating a bot for Hackathon 2024
 ----------------------------------------------
 
-This module provides a framework for creating a bot for Hackaton 2024.
-The main class is `HackatonBot`, which should be subclassed and implemented
+This module provides a framework for creating a bot for Hackathon 2024.
+The main class is `HackathonBot`, which should be subclassed and implemented
 with the required methods.
 """
 
@@ -15,5 +15,5 @@ __version__ = "0.1.0"
 
 from .actions import *
 from .enums import *
-from .hackaton_bot import HackatonBot
+from .hackathon_bot import HackathonBot
 from .protocols import *

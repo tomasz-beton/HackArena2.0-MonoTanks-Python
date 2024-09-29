@@ -2,7 +2,7 @@
 
 import pytest
 
-from hackaton_bot.payloads import (
+from hackathon_bot.payloads import (
     ConnectionRejectedPayload,
     GameEndPayload,
     GameStatePayload,

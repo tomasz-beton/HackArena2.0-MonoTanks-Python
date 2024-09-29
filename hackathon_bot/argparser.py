@@ -1,7 +1,7 @@
 """This module provides the command line argument parser.
 
 The command line argument parser is used to parse the command line arguments
-when starting the hackaton bot.
+when starting the hackathon bot.
 
 Functions
 ---------

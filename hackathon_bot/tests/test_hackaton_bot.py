@@ -1,4 +1,4 @@
-"""Tests for the hackaton_bot module."""
+"""Tests for the hackathon_bot module."""
 
 from __future__ import annotations
 
@@ -11,18 +11,18 @@ from unittest.mock import AsyncMock, Mock, patch
 import pytest
 import websockets
 
-from hackaton_bot import argparser
-from hackaton_bot.actions import ResponseAction
-from hackaton_bot.enums import PacketType
-from hackaton_bot.hackaton_bot import HackatonBot
-from hackaton_bot.models import GameResultModel, GameStateModel, LobbyDataModel
-from hackaton_bot.payloads import (
+from hackathon_bot import argparser
+from hackathon_bot.actions import ResponseAction
+from hackathon_bot.enums import PacketType
+from hackathon_bot.hackathon_bot import HackathonBot
+from hackathon_bot.models import GameResultModel, GameStateModel, LobbyDataModel
+from hackathon_bot.payloads import (
     GameEndPayload,
     GameStatePayload,
     LobbyDataPayload,
     Payload,
 )
-from hackaton_bot.protocols import GameResult, GameState, LobbyData
+from hackathon_bot.protocols import GameResult, GameState, LobbyData
 
 # pylint: disable=protected-access
 
@@ -46,7 +46,7 @@ class TestResponseAction(ResponseAction):
         return TestPayload()
 
 
-class TestBot(HackatonBot):  # pylint: disable=too-many-instance-attributes
+class TestBot(HackathonBot):  # pylint: disable=too-many-instance-attributes
     """Represents a test bot."""
 
     __test__ = False
@@ -86,7 +86,7 @@ def test_get_server_url() -> None:
 
     assert (
         TestBot()._get_server_url(args)
-        == "ws://localhost:8080/?nickname=testBot&playerType=hackatonBot&joinCode=C0D3"
+        == "ws://localhost:8080/?nickname=testBot&playerType=hackathonBot&joinCode=C0D3"
     )
 
 
