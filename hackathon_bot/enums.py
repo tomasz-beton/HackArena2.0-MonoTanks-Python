@@ -138,6 +138,12 @@ class PacketType(IntEnum):
         Represents a tank shoot packet.
     WARNING_GROUP: :class:`int`
         Represents a 4-bit group for warning packets.
+    PLAYER_ALREADY_MADE_ACTION_WARNING: :class:`int`
+        Represents a player already made action warning packet.
+    CUSTOM_WARNING: :class:`int`
+        Represents a custom warning packet.
+    SLOW_RESPONSE_WARNING: :class:`int`
+        Represents a slow response warning packet.
     ERROR_GROUP: :class:`int`
         Represents a 4-bit group for error packets.
 
@@ -176,5 +182,8 @@ class PacketType(IntEnum):
     TANK_SHOOT = PLAYER_RESPONSE_ACTION_GROUP | HAS_PAYLOAD | 0x3
 
     WARNING_GROUP = 0xE0
+    PLAYER_ALREADY_MADE_ACTION_WARNING = WARNING_GROUP | 0x2
+    CUSTOM_WARNING = WARNING_GROUP | HAS_PAYLOAD | 0x3
+    SLOW_RESPONSE_WARNING = WARNING_GROUP | 0x4
 
     ERROR_GROUP = 0xF0
