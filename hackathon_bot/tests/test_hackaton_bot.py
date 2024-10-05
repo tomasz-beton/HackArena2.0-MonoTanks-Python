@@ -10,10 +10,11 @@ from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
 import websockets
+import websockets.frames
 
 from hackathon_bot import argparser
-from hackathon_bot.actions import ResponseAction
-from hackathon_bot.enums import PacketType
+from hackathon_bot.actions import Pass, ResponseAction
+from hackathon_bot.enums import PacketType, WarningType
 from hackathon_bot.hackathon_bot import HackathonBot
 from hackathon_bot.models import GameResultModel, GameStateModel, LobbyDataModel
 from hackathon_bot.payloads import (
@@ -50,33 +51,17 @@ class TestBot(HackathonBot):  # pylint: disable=too-many-instance-attributes
     """Represents a test bot."""
 
     __test__ = False
+    _loop = Mock()
 
-    async def on_lobby_data_received(self, lobby_data: LobbyData) -> None: ...
+    def on_lobby_data_received(self, lobby_data: LobbyData) -> None: ...
 
-    async def next_move(self, game_state: GameState) -> ResponseAction: ...
+    def next_move(self, game_state: GameState) -> ResponseAction: ...
 
-    async def on_game_ended(self, game_result: GameResult) -> None: ...
+    def on_game_ended(self, game_result: GameResult) -> None: ...
 
-
-class TestWebsocket:
-    """Represents a test websocket."""
-
-    async def __aenter__(self) -> TestWebsocket:
-        return self
-
-    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
-        pass
-
-    def __call__(self, url) -> TestWebsocket:
-        return self
-
-    async def recv(self) -> str:
-        """Receive a message.
-
-        This method contains a small delay to simulate a real websocket connection.
-        """
-        await asyncio.sleep(0.05)
-        return json.dumps({"type": int(PacketType.UNKNOWN)})
+    def on_warning_received(
+        self, warning: WarningType, message: str | None
+    ) -> None: ...
 
 
 def test_get_server_url() -> None:
@@ -107,47 +92,141 @@ async def test_send_packet() -> None:
     websocket.send.assert_called_once()
 
 
-@pytest.mark.asyncio
-async def test_run(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Test run method."""
+class BaseTestWebsocket:
+    """Represents a test websocket."""
 
-    monkeypatch.setattr(argparser, "get_args", Mock())
-    monkeypatch.setattr(websockets, "connect", TestWebsocket())
+    def __init__(self, url) -> None:
+        pass
 
-    bot = TestBot()
-    bot._get_server_url = Mock(return_value="ws://localhost:8080")
+    async def __aenter__(self) -> BaseTestWebsocket:
+        return self
 
-    # Run the bot for a short period of time
-    # because method `run` is an infinite loop
-    try:
-        await asyncio.wait_for(bot.run(), timeout=0.2)
-    except asyncio.TimeoutError:
+    async def __aexit__(self, exc_type, exc_value, traceback) -> None:
         pass
 
 
+class _TestWebsocketHandleMessages(BaseTestWebsocket):
+
+    async def recv(self) -> str:
+        """Simulate receiving a message."""
+
+        # A small delay to simulate a real websocket connection.
+        await asyncio.sleep(0.05)
+        return json.dumps({"type": int(PacketType.UNKNOWN)})
+
+
+class _TestWebsocketConnectionClosedOK(BaseTestWebsocket):
+
+    async def recv(self) -> str:
+        """Raise `ConnectionClosedOK` to exit the loop."""
+        raise websockets.exceptions.ConnectionClosedOK(
+            websockets.frames.Close(1000, "test"), None
+        )
+
+
+class _TestWebsocketConnectionClosedError(BaseTestWebsocket):
+
+    async def recv(self) -> str:
+        """Raise `ConnectionClosedError` to exit the loop."""
+        raise websockets.exceptions.ConnectionClosedError(
+            websockets.frames.Close(1001, "test"), None
+        )
+
+
 @pytest.mark.asyncio
-async def test_handle_messages__ping() -> None:
+async def test_start_loop() -> None:
+    """Test _start_loop method."""
+
+    bot = TestBot()
+    bot._handle_messages = Mock()
+
+    server_url = "ws://localhost:8080"
+
+    with patch("websockets.connect", _TestWebsocketHandleMessages):
+        try:
+            await asyncio.wait_for(bot._start_loop(server_url), timeout=0.1)
+        except asyncio.TimeoutError:
+            pass
+
+        assert bot._handle_messages.called
+
+
+@pytest.mark.asyncio
+async def test_start_loop_connection_closed_ok() -> None:
+    """Test _start_loop method with ConnectionClosedOK exception."""
+
+    bot = TestBot()
+    bot._handle_messages = Mock()
+
+    server_url = "ws://localhost:8080"
+
+    with patch("websockets.connect", _TestWebsocketConnectionClosedOK):
+        try:
+            await asyncio.wait_for(bot._start_loop(server_url), timeout=0.1)
+        except asyncio.TimeoutError:  # pragma: no cover
+            # Loop should exit after receiving a ConnectionClosedOK exception.
+            assert False  # pragma: no cover
+
+
+@pytest.mark.asyncio
+async def test_start_loop_connection_closed_error() -> None:
+    """Test _start_loop method with ConnectionClosedError exception."""
+
+    bot = TestBot()
+    bot._handle_messages = Mock()
+
+    server_url = "ws://localhost:8080"
+
+    with patch("websockets.connect", _TestWebsocketConnectionClosedError):
+        try:
+            await asyncio.wait_for(bot._start_loop(server_url), timeout=0.1)
+        except asyncio.TimeoutError:  # pragma: no cover
+            # Loop should exit after receiving a ConnectionClosedError exception.
+            assert False  # pragma: no cover
+
+
+def test_run(monkeypatch):
+    """Test run method."""
+
+    mock_args = Mock()
+    monkeypatch.setattr(argparser, "get_args", lambda: mock_args)
+
+    mock_connection = AsyncMock()
+    monkeypatch.setattr(websockets, "connect", AsyncMock(return_value=mock_connection))
+
+    bot = TestBot()
+    bot._get_server_url = Mock(return_value="ws://localhost:8080")
+    bot._start_loop = AsyncMock(return_value=None)
+
+    with patch("asyncio.run") as mock_run:
+        mock_run.side_effect = asyncio.ensure_future
+        bot.run()
+
+        bot._get_server_url.assert_called_once_with(mock_args)
+        bot._start_loop.assert_called_once_with("ws://localhost:8080")
+
+
+def test_handle_messages__ping() -> None:
     """Test _handle_messages method with a ping packet."""
 
     ws = Mock()
     bot = TestBot()
-    bot._handle_ping_packet = AsyncMock()
+    bot._handle_ping_packet = Mock()
 
     with patch.object(
-        bot, "_handle_ping_packet", new_callable=AsyncMock
+        bot, "_handle_ping_packet", new_callable=Mock
     ) as mock_handle_ping:
-        await bot._handle_messages(ws, json.dumps({"type": PacketType.PING}))
+        bot._handle_messages(ws, json.dumps({"type": PacketType.PING}))
         mock_handle_ping.assert_called_once_with(ws)
 
 
-@pytest.mark.asyncio
-async def test_handle_messages__game_state(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_handle_messages__game_state(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test _handle_messages method with a game state packet."""
 
     ws = Mock()
     bot = TestBot()
     bot._lobby_data = Mock()
-    bot._handle_next_move = AsyncMock()
+    bot._handle_next_move = Mock()
 
     game_state = Mock()
 
@@ -156,21 +235,20 @@ async def test_handle_messages__game_state(monkeypatch: pytest.MonkeyPatch) -> N
 
     # Check if the _handle_next_move method was called with the game state
     with patch.object(
-        bot, "_handle_next_move", new_callable=AsyncMock
+        bot, "_handle_next_move", new_callable=Mock
     ) as mock_handle_game_state:
-        await bot._handle_messages(
+        bot._handle_messages(
             ws, json.dumps({"type": PacketType.GAME_STATE, "payload": {}})
         )
         mock_handle_game_state.assert_called_once_with(ws, game_state)
 
 
-@pytest.mark.asyncio
-async def test_handle_messages__lobby_data(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_handle_messages__lobby_data(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test _handle_messages method with a lobby data packet."""
 
     ws = Mock()
     bot = TestBot()
-    bot.on_lobby_data_received = AsyncMock()
+    bot.on_lobby_data_received = Mock()
 
     lobby_data = Mock()
 
@@ -179,9 +257,9 @@ async def test_handle_messages__lobby_data(monkeypatch: pytest.MonkeyPatch) -> N
 
     # Check if the on_lobby_data_received method was called with the lobby data
     with patch.object(
-        bot, "on_lobby_data_received", new_callable=AsyncMock
+        bot, "on_lobby_data_received", new_callable=Mock
     ) as mock_handle_lobby_data:
-        await bot._handle_messages(
+        bot._handle_messages(
             ws, json.dumps({"type": PacketType.LOBBY_DATA, "payload": {}})
         )
         mock_handle_lobby_data.assert_called_once_with(lobby_data)
@@ -190,19 +268,49 @@ async def test_handle_messages__lobby_data(monkeypatch: pytest.MonkeyPatch) -> N
     assert bot._lobby_data == lobby_data
 
 
-@pytest.mark.asyncio
-async def test_handle_messages__connection_accepted() -> None:
+@pytest.mark.parametrize(
+    "packet_type, message",
+    [
+        (PacketType.CUSTOM_WARNING, "custom_message"),
+        (PacketType.PLAYER_ALREADY_MADE_ACTION_WARNING, None),
+        (PacketType.SLOW_RESPONSE_WARNING, None),
+        (PacketType.ACTION_IGNORED_DUE_TO_DEAD_WARNING, None),
+    ],
+)
+def test_handle_messages__warning(packet_type, message) -> None:
+    """Test _handle_messages method with a warning packet."""
+
+    ws = Mock()
+    bot = TestBot()
+    bot.on_warning_received = Mock()
+
+    # Check if the on_warning_received method was called with the warning and the message
+    with patch.object(
+        bot, "on_warning_received", new_callable=Mock
+    ) as mock_handle_warning:
+        bot._handle_messages(
+            ws,
+            json.dumps(
+                {
+                    "type": packet_type,
+                    "payload": message,
+                }
+            ),
+        )
+        mock_handle_warning.assert_called_once_with(packet_type, message)
+
+
+def test_handle_messages__connection_accepted() -> None:
     """Test _handle_messages method with a connection accepted packet."""
 
     bot = TestBot()
     ws = Mock()
 
     # Check if the method does not raise an exception
-    await bot._handle_messages(ws, json.dumps({"type": PacketType.CONNECTION_ACCEPTED}))
+    bot._handle_messages(ws, json.dumps({"type": PacketType.CONNECTION_ACCEPTED}))
 
 
-@pytest.mark.asyncio
-async def test_handle_messages__connection_rejected() -> None:
+def test_handle_messages__connection_rejected() -> None:
     """Test _handle_messages method with a connection rejected packet."""
 
     bot = TestBot()
@@ -210,7 +318,7 @@ async def test_handle_messages__connection_rejected() -> None:
 
     # Check if the reason is printed
     with patch("builtins.print") as mock_print:
-        await bot._handle_messages(
+        bot._handle_messages(
             ws,
             json.dumps(
                 {"type": PacketType.CONNECTION_REJECTED, "payload": {"reason": "test"}}
@@ -220,19 +328,17 @@ async def test_handle_messages__connection_rejected() -> None:
         mock_print.assert_called_once_with("Connection rejected: test")
 
 
-@pytest.mark.asyncio
-async def test_handle_messages__game_start() -> None:
+def test_handle_messages__game_start() -> None:
     """Test _handle_messages method with a game start packet."""
 
     bot = TestBot()
     ws = Mock()
 
     # Check if the method does not raise an exception
-    await bot._handle_messages(ws, json.dumps({"type": PacketType.GAME_START}))
+    bot._handle_messages(ws, json.dumps({"type": PacketType.GAME_START}))
 
 
-@pytest.mark.asyncio
-async def test_handle_messages__game_end(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_handle_messages__game_end(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test _handle_messages method with a game end packet."""
     bot = TestBot()
     ws = Mock()
@@ -243,32 +349,28 @@ async def test_handle_messages__game_end(monkeypatch: pytest.MonkeyPatch) -> Non
     monkeypatch.setattr(GameResultModel, "from_payload", Mock(return_value=game_result))
 
     # Check if the on_game_ended method was called with the game result
-    with patch.object(
-        bot, "on_game_ended", new_callable=AsyncMock
-    ) as mock_handle_game_end:
-        await bot._handle_messages(
+    with patch.object(bot, "on_game_ended", new_callable=Mock) as mock_handle_game_end:
+        bot._handle_messages(
             ws, json.dumps({"type": PacketType.GAME_END, "payload": {}})
         )
         mock_handle_game_end.assert_called_once_with(game_result)
 
 
-@pytest.mark.asyncio
-async def test_handle_ping_packet() -> None:
-    """Test _handle_ping_packet method.
+def test_handle_ping_packet() -> None:
+    """Test _handle_ping_packet method."""
 
-    This method should send a pong packet."""
-
+    ws = Mock()
     bot = TestBot()
-    websocket = Mock()
-    bot._send_packet = AsyncMock()
+    bot._send_packet = Mock()
 
-    await bot._handle_ping_packet(websocket)
+    with patch("asyncio.run_coroutine_threadsafe") as mock_run_coroutine_threadsafe:
+        bot._handle_ping_packet(ws)
 
-    bot._send_packet.assert_called_once_with(websocket, PacketType.PONG)
+        bot._send_packet.assert_called_once_with(ws, PacketType.PONG)
+        mock_run_coroutine_threadsafe.assert_called_once()
 
 
-@pytest.mark.asyncio
-async def test_handle_next_move__is_processing():
+def test_handle_next_move__is_processing():
     """Test _handle_next_move method when the bot is processing.
 
     The method should not call the next_move method.
@@ -278,15 +380,14 @@ async def test_handle_next_move__is_processing():
     bot._is_processing = True
     ws = Mock()
 
-    bot.next_move = AsyncMock()
+    bot.next_move = Mock()
 
-    await bot._handle_next_move(ws, TestPayload())
+    bot._handle_next_move(ws, TestPayload())
 
     bot.next_move.assert_not_called()
 
 
-@pytest.mark.asyncio
-async def test_handle_next_move__is_not_processing():
+def test_handle_next_move__is_not_processing():
     """Test _handle_next_move method when the bot is not processing.
 
     The method should call the next_move method.
@@ -298,38 +399,43 @@ async def test_handle_next_move__is_not_processing():
     bot._is_processing = False
     ws = Mock()
     game_state = Mock()
+    test_response_action = TestResponseAction()
 
-    bot.next_move = AsyncMock(return_value=TestResponseAction())
-    bot._send_packet = AsyncMock()
+    bot.next_move = Mock(return_value=test_response_action)
+    bot._send_packet = Mock()
 
-    await bot._handle_next_move(ws, game_state)
+    with patch("asyncio.run_coroutine_threadsafe") as mock_run_coroutine_threadsafe:
+        bot._handle_next_move(ws, game_state)
 
-    # Check if the next_move method was called and sent a packet
-    bot.next_move.assert_called_once_with(game_state)
+        # Check if the next_move method was called
+        bot.next_move.assert_called_once_with(game_state)
 
-    # Check if the _is_processing flag was set to False
-    assert bot._is_processing is False
+        # Check if the _is_processing flag was set to False
+        assert bot._is_processing is False
 
-    # Check if the packet was sent
-    bot._send_packet.assert_called_once()
+        # Check if the packet was sent
+        mock_run_coroutine_threadsafe.assert_called_once()
+        bot._send_packet.assert_called_once_with(
+            ws,
+            test_response_action.packet_type,
+            test_response_action.to_payload(game_state.id),
+        )
 
 
-@pytest.mark.asyncio
-async def test_handle_next_move__keyboard_interrupt():
+def test_handle_next_move__keyboard_interrupt():
     """Test _handle_next_move method when a KeyboardInterrupt is raised."""
 
     bot = TestBot()
     bot._is_processing = False
     ws = Mock()
 
-    bot.next_move = AsyncMock(side_effect=KeyboardInterrupt)
+    bot.next_move = Mock(side_effect=KeyboardInterrupt)
 
     with pytest.raises(KeyboardInterrupt):
-        await bot._handle_next_move(ws, Mock())
+        bot._handle_next_move(ws, Mock())
 
 
-@pytest.mark.asyncio
-async def test_handle_next_move__next_move_failed():
+def test_handle_next_move__next_move_failed():
     """Test _handle_next_move method when
     the next_move method raises an exception.
 
@@ -341,11 +447,11 @@ async def test_handle_next_move__next_move_failed():
     bot._is_processing = False
     ws = Mock()
 
-    bot.next_move = AsyncMock(side_effect=Exception)
+    bot.next_move = Mock(side_effect=Exception)
 
     # Check if the error is printed
     with patch("builtins.print") as mock_print:
-        await bot._handle_next_move(ws, TestPayload())
+        bot._handle_next_move(ws, TestPayload())
         mock_print.assert_called()
 
     # Check if the next_move method was called
@@ -353,3 +459,29 @@ async def test_handle_next_move__next_move_failed():
 
     # Check if the _is_processing flag was set to False
     assert bot._is_processing is False
+
+
+def test_handle_next_move_pass():
+    """Test _handle_next_move method when the next move returns `None`."""
+
+    ws = AsyncMock()
+    game_state = Mock()
+
+    bot = TestBot()
+    bot._is_processing = False
+    bot.next_move = Mock(return_value=None)
+    bot._send_packet = Mock()
+
+    with patch("asyncio.run_coroutine_threadsafe") as mock_run_coroutine_threadsafe:
+        bot._handle_next_move(ws, game_state)
+
+        # Check if the next_move method was called
+        bot.next_move.assert_called_once_with(game_state)
+
+        # Check if the _is_processing flag was set to False
+        assert bot._is_processing is False
+
+        # Check if the packet was sent
+        mock_run_coroutine_threadsafe.assert_called_once()
+        payload = Pass().to_payload(game_state.id)
+        bot._send_packet.assert_called_once_with(ws, Pass().packet_type, payload)

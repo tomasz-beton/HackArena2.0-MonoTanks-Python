@@ -190,6 +190,8 @@ class GameEndPlayer(Protocol):
         The color of the player in format `0xAABBGGRR`.
     score: :class:`int`
         The score of the player.
+    kills: :class:`int`
+        The number of kills of the player.
 
     Notes
     -----
@@ -212,6 +214,10 @@ class GameEndPlayer(Protocol):
     @property
     def score(self) -> int:
         """The score of the player."""
+
+    @property
+    def kills(self) -> int:
+        """The number of kills of the player."""
 
 
 class Agent(GameStatePlayer, Protocol):
