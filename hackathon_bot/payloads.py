@@ -272,3 +272,8 @@ class TankRotationPayload(ResponseActionPayload):
 @dataclass(slots=True, frozen=True)
 class TankShootPayload(ResponseActionPayload):
     """Represents a TANK_SHOOT payload."""
+
+
+@dataclass(slots=True, frozen=True)
+class ResponsePassPayload(ResponseActionPayload):
+    """Represents a PASS payload."""

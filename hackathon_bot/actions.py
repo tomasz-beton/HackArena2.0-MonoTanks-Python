@@ -12,6 +12,8 @@ Rotation
     Represents a rotation response action.
 Shoot
     Represents a shoot response action.
+Pass
+    Represents a pass response action.
 """
 
 from abc import ABC, abstractmethod
@@ -28,6 +30,7 @@ from .payloads import (
     TankMovementPayload,
     TankRotationPayload,
     TankShootPayload,
+    ResponsePassPayload,
 )
 
 
@@ -36,6 +39,7 @@ __all__ = (
     "Movement",
     "Rotation",
     "Shoot",
+    "Pass",
 )
 
 
@@ -112,3 +116,22 @@ class Shoot(ResponseAction):
     @final
     def to_payload(self, game_state_id: str) -> TankShootPayload:
         return TankShootPayload(game_state_id)
+
+
+@dataclass(slots=True, frozen=True)
+class Pass(ResponseAction):
+    """Represents a pass response action.
+
+    Example
+    -------
+
+    .. code-block:: python
+        from hackathon_bot import Pass
+        pass_ = Pass()
+    """
+
+    packet_type: ClassVar[PacketType] = PacketType.RESPONSE_PASS
+
+    @final
+    def to_payload(self, game_state_id: str) -> TankShootPayload:
+        return ResponsePassPayload(game_state_id)

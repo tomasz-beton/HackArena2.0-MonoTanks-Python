@@ -5,6 +5,7 @@ from hackathon_bot import (
     Movement,
     Rotation,
     Shoot,
+    Pass,
     MovementDirection,
     RotationDirection,
 )
@@ -55,5 +56,14 @@ def test_Shoot_to_payload():
 
     shoot = Shoot()
     payload = shoot.to_payload("game_state_id")
+
+    assert payload.game_state_id == "game_state_id"
+
+
+def test_Pass_to_payload():
+    """Test Pass.to_payload method."""
+
+    pass_ = Pass()
+    payload = pass_.to_payload("game_state_id")
 
     assert payload.game_state_id == "game_state_id"

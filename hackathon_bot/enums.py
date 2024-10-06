@@ -136,12 +136,14 @@ class PacketType(IntEnum):
         Represents a tank rotation packet.
     TANK_SHOOT: :class:`int`
         Represents a tank shoot packet.
+    RESPONSE_PASS: :class:`int`
+        Represents a response pass packet.
     WARNING_GROUP: :class:`int`
         Represents a 4-bit group for warning packets.
-    PLAYER_ALREADY_MADE_ACTION_WARNING: :class:`int`
-        Represents a player already made action warning packet.
     CUSTOM_WARNING: :class:`int`
         Represents a custom warning packet.
+    PLAYER_ALREADY_MADE_ACTION_WARNING: :class:`int`
+        Represents a player already made action warning packet.
     SLOW_RESPONSE_WARNING: :class:`int`
         Represents a slow response warning packet.
     ERROR_GROUP: :class:`int`
@@ -180,10 +182,33 @@ class PacketType(IntEnum):
     TANK_MOVEMENT = PLAYER_RESPONSE_ACTION_GROUP | HAS_PAYLOAD | 0x1
     TANK_ROTATION = PLAYER_RESPONSE_ACTION_GROUP | HAS_PAYLOAD | 0x2
     TANK_SHOOT = PLAYER_RESPONSE_ACTION_GROUP | HAS_PAYLOAD | 0x3
+    RESPONSE_PASS = PLAYER_RESPONSE_ACTION_GROUP | HAS_PAYLOAD | 0x7
 
     WARNING_GROUP = 0xE0
+    CUSTOM_WARNING = WARNING_GROUP | HAS_PAYLOAD | 0x1
     PLAYER_ALREADY_MADE_ACTION_WARNING = WARNING_GROUP | 0x2
-    CUSTOM_WARNING = WARNING_GROUP | HAS_PAYLOAD | 0x3
+    ACTION_IGNORED_DUE_TO_DEAD_WARNING = WARNING_GROUP | 0x3
     SLOW_RESPONSE_WARNING = WARNING_GROUP | 0x4
 
     ERROR_GROUP = 0xF0
+
+
+class WarningType(IntEnum):
+    """Represents the type of a warning.
+
+    Attributes
+    ----------
+    CUSTOM: :class:`int`
+        Represents a custom warning.
+    PLAYER_ALREADY_MADE_ACTION: :class:`int`
+        Represents a player already made action warning.
+    ACTION_IGNORED_DUE_TO_DEAD: :class:`int`
+        Represents an action ignored due to dead warning.
+    SLOW_RESPONSE: :class:`int`
+        Represents a slow response warning.
+    """
+
+    CUSTOM = PacketType.CUSTOM_WARNING
+    PLAYER_ALREADY_MADE_ACTION = PacketType.PLAYER_ALREADY_MADE_ACTION_WARNING
+    ACTION_IGNORED_DUE_TO_DEAD = PacketType.ACTION_IGNORED_DUE_TO_DEAD_WARNING
+    SLOW_RESPONSE = PacketType.SLOW_RESPONSE_WARNING
