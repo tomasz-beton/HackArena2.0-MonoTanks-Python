@@ -42,6 +42,7 @@ def test_RawPlayer_from_json__is_agent__is_not_dead():
     assert raw_player.color == 4294901760
     assert raw_player.ping == 4
     assert raw_player.score == 23
+    assert raw_player.kills is None
     assert raw_player.ticks_to_regen is None
 
 
@@ -67,6 +68,7 @@ def test_RawPlayer_from_json__is_agent__is_dead():
     assert raw_player.color == 4294901760
     assert raw_player.ping == 4
     assert raw_player.score == 23
+    assert raw_player.kills is None
     assert raw_player.ticks_to_regen == 22
 
 
@@ -89,6 +91,7 @@ def test_RawPlayer_from_json__is_not_agent():
     assert raw_player.nickname == "player2"
     assert raw_player.color == 4278190335
     assert raw_player.ping == 1
+    assert raw_player.kills is None
 
     # The player is not an agent, so the following fields should be None.
     assert raw_player.score is None
@@ -595,12 +598,14 @@ def test_GameEndPayload():
                 "nickname": "player1",
                 "color": 4294901760,
                 "score": 23,
+                "kills": 5,
             },
             {
                 "id": "e149e7a5-c849-4765-81be-c4538db33ecd",
                 "nickname": "player2",
                 "color": 4278190335,
                 "score": 132,
+                "kills": 2,
             },
         ],
     }

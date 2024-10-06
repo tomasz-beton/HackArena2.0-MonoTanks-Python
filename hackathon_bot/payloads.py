@@ -32,6 +32,7 @@ class RawPlayer:
     nickname: str
     color: int
     score: int | None = None
+    kills: int | None = None
     ping: int | None = None
     ticks_to_regen: int | None = None
 

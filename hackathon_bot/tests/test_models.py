@@ -57,6 +57,7 @@ def test_Player_from_raw__game_state__is_agent__is_not_dead():
     assert player.score == 23
     assert player.ping == 1
     assert player.ticks_to_regenerate is None
+    assert player.kills is None
 
 
 def test_BasePlayer_from_raw__game_state__is_agent__is_dead():
@@ -82,6 +83,7 @@ def test_BasePlayer_from_raw__game_state__is_agent__is_dead():
     assert player.score == 23
     assert player.ping == 1
     assert player.ticks_to_regenerate == 22
+    assert player.kills is None
 
 
 def test_BasePlayer_from_raw__game_state__is_not_agent():
@@ -106,6 +108,7 @@ def test_BasePlayer_from_raw__game_state__is_not_agent():
 
     # Player is not an agent, so the following attributes should be None.
     assert player.score is None
+    assert player.kills is None
     assert player.ticks_to_regenerate is None
 
 
@@ -126,6 +129,7 @@ def test_BasePlayer_from_raw__lobby_data():
 
     # The following attributes should be None in the lobby data.
     assert player.score is None
+    assert player.kills is None
     assert player.ping is None
     assert player.ticks_to_regenerate is None
 
@@ -138,6 +142,7 @@ def test_BasePlayer_from_raw__game_end():
         nickname="player1",
         color=4278190335,
         score=23,
+        kills=2,
     )
 
     player = PlayerModel.from_raw(raw_player)
@@ -146,6 +151,7 @@ def test_BasePlayer_from_raw__game_end():
     assert player.nickname == "player1"
     assert player.color == 4278190335
     assert player.score == 23
+    assert player.kills == 2
 
     # The following attributes should be None in the game end data.
     assert player.ping is None

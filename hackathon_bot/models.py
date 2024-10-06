@@ -41,6 +41,7 @@ class PlayerModel:
     nickname: str
     color: int
     score: int | None = None
+    kills: int | None = None
     ping: int | None = None
     ticks_to_regenerate: int | None = None
 
