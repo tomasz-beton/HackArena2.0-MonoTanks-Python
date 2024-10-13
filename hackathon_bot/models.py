@@ -17,7 +17,9 @@ from typing import TYPE_CHECKING
 
 import humps
 
-from .enums import Direction, ZoneStatus
+from hackathon_bot.payloads import RawBullet, RawItem, RawLaser, RawMine
+
+from .enums import BulletType, Direction, ItemType, Orientation, ZoneStatus
 
 if TYPE_CHECKING:
     from .payloads import (
@@ -44,6 +46,7 @@ class PlayerModel:
     kills: int | None = None
     ping: int | None = None
     ticks_to_regenerate: int | None = None
+    is_using_radar: bool | None = None
 
     @classmethod
     def from_raw(cls, raw: RawPlayer) -> PlayerModel:
@@ -79,6 +82,7 @@ class TankModel:
     direction: Direction
     turret: TurretModel
     health: int | None = None
+    secondary_item: ItemType | None = None
 
     @classmethod
     def from_raw(cls, raw: RawTank) -> TankModel:
@@ -111,15 +115,84 @@ class BulletModel:
     id: int
     speed: float
     direction: Direction
+    type: BulletType = BulletType.BASIC
 
     @classmethod
-    def from_raw(cls, raw: dict) -> BulletModel:
+    def from_raw(cls, raw: RawBullet) -> BulletModel:
         """Creates a bullet from a raw bullet payload."""
+
+        if raw.type == "doubleBullet":
+            return DoubleBulletModel.from_raw(raw)
+
+        dict_ = asdict(raw)
+        return cls(**dict_)
+
+
+@dataclass(slots=True, frozen=True)
+class LaserModel:
+    """Represents a laser model."""
+
+    __instancecheck_laser__ = True
+
+    id: int
+    orientation: Orientation
+
+    @classmethod
+    def from_raw(cls, raw: RawLaser) -> LaserModel:
+        """Creates a laser from a raw laser payload."""
         return cls(**asdict(raw))
 
 
 @dataclass(slots=True, frozen=True)
-class ZoneModel(ABC):
+class DoubleBulletModel(BulletModel):
+    """Represents a double bullet model."""
+
+    __instancecheck_doublebullet__ = True
+
+    @classmethod
+    def from_raw(cls, raw: RawBullet) -> DoubleBulletModel:
+        """Creates a double bullet from a raw double bullet payload."""
+        dict_ = asdict(raw)
+        dict_["type"] = BulletType.DOUBLE
+        return cls(**dict_)
+
+
+@dataclass(slots=True, frozen=True)
+class MineModel:
+    """Represents a mine model."""
+
+    __instancecheck_mine__ = True
+
+    id: int
+    explosion_remaining_ticks: int | None
+
+    @property
+    def exploded(self) -> bool:
+        """Whether the mine has exploded."""
+        return self.explosion_remaining_ticks is not None
+
+    @classmethod
+    def from_raw(cls, raw: RawMine) -> MineModel:
+        """Creates a mine from a raw mine payload."""
+        return cls(**asdict(raw))
+
+
+@dataclass(slots=True, frozen=True)
+class ItemModel:
+    """Represents an item model."""
+
+    __instancecheck_item__ = True
+
+    type: ItemType
+
+    @classmethod
+    def from_raw(cls, raw: RawItem) -> ItemModel:
+        """Creates an item from a raw item payload."""
+        return cls(**asdict(raw))
+
+
+@dataclass(slots=True, frozen=True)
+class ZoneModel(ABC):  # pylint: disable=too-many-instance-attributes
     """Represents a zone model."""
 
     x: int
@@ -217,7 +290,7 @@ if TYPE_CHECKING:
 class TileModel:
     """Represents a tile model on the map."""
 
-    entity: TileEntity | None
+    entities: list[TileEntity]
     zone: ZoneModel | None
     is_visible: bool
 
@@ -231,7 +304,9 @@ class MapModel:
     visibility: tuple[str]
 
     @classmethod
-    def from_raw(cls, raw: RawMap, agent_id: str) -> MapModel:
+    def from_raw(  # pylint: disable=too-many-locals
+        cls, raw: RawMap, agent_id: str
+    ) -> MapModel:
         """Creates a map from a raw map payload."""
         zones = tuple(ZoneModel.from_raw(z) for z in raw.zones)
 
@@ -239,22 +314,27 @@ class MapModel:
         for x, row in enumerate(raw.tiles):
             tab = []
             for y, raw_tile in enumerate(row):
-                obj = raw_tile[0] if raw_tile else None
-                if obj is None:
-                    tile_obj = None
-                elif obj.type == "tank":
-                    raw_tank: RawTank = obj.entity
-                    owner_id = raw_tank.owner_id
-                    if owner_id == agent_id:
-                        tile_obj = AgentTankModel.from_raw(obj.entity)
+                objects = []
+                for obj in raw_tile:
+                    if obj.type == "tank":
+                        raw_tank: RawTank = obj.entity
+                        owner_id = raw_tank.owner_id
+                        if owner_id == agent_id:
+                            objects.append(AgentTankModel.from_raw(obj.entity))
+                        else:
+                            objects.append(TankModel.from_raw(obj.entity))
+                    elif obj.type == "wall":
+                        objects.append(WallModel())
+                    elif obj.type == "bullet":
+                        objects.append(BulletModel.from_raw(obj.entity))
+                    elif obj.type == "laser":
+                        objects.append(LaserModel.from_raw(obj.entity))
+                    elif obj.type == "mine":
+                        objects.append(MineModel.from_raw(obj.entity))
+                    elif obj.type == "item":
+                        objects.append(ItemModel.from_raw(obj.entity))
                     else:
-                        tile_obj = TankModel.from_raw(obj.entity)
-                elif obj.type == "wall":
-                    tile_obj = WallModel()
-                elif obj.type == "bullet":
-                    tile_obj = BulletModel.from_raw(obj.entity)
-                else:
-                    raise ValueError(f"Unknown tile type: {obj.type}")
+                        raise ValueError(f"Unknown tile type: {obj.type}")
 
                 is_visible = raw.visibility[y][x] == "1"
                 zone = next(
@@ -265,7 +345,8 @@ class MapModel:
                     ),
                     None,
                 )
-                tab.append(TileModel(tile_obj, zone, is_visible))
+
+                tab.append(TileModel(objects, zone, is_visible))
             tiles.append(tuple(tab))
 
         return MapModel(tuple(tiles), tuple(zones), raw.visibility)

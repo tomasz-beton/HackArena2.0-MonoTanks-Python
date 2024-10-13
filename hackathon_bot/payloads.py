@@ -25,7 +25,7 @@ class ServerSettings:
 
 
 @dataclass(slots=True, frozen=True)
-class RawPlayer:
+class RawPlayer:  # pylint: disable=too-many-instance-attributes
     """Represents a raw player data."""
 
     id: str
@@ -35,6 +35,7 @@ class RawPlayer:
     kills: int | None = None
     ping: int | None = None
     ticks_to_regen: int | None = None
+    is_using_radar: bool | None = None
 
     @classmethod
     def from_json(cls, json_data: dict) -> RawPlayer:
@@ -46,7 +47,7 @@ class RawPlayer:
 class RawMap:
     """Represents a raw map data."""
 
-    tiles: tuple[tuple[tuple[RawTileObject | None]]]
+    tiles: tuple[tuple[tuple[RawTileObject] | None]]
     zones: tuple[RawZone]
     visibility: tuple[str]
 
@@ -116,10 +117,50 @@ class RawBullet(RawTileEntity):
     id: int
     speed: int | None = None
     direction: int | None = None
+    type: str = "bullet"
 
     @classmethod
     def from_json(cls, json_data: dict) -> RawBullet:
         """Creates a RawBullet from a JSON dictionary."""
+        print(json_data)
+        return cls(**json_data)
+
+
+@dataclass(slots=True, frozen=True)
+class RawLaser(RawTileEntity):
+    """Represents a raw laser data."""
+
+    id: int
+    orientation: int
+
+    @classmethod
+    def from_json(cls, json_data: dict) -> RawLaser:
+        """Creates a RawLaser from a JSON dictionary."""
+        return cls(**json_data)
+
+
+@dataclass(slots=True, frozen=True)
+class RawMine(RawTileEntity):
+    """Represents a raw mine data."""
+
+    id: int
+    explosion_remaining_ticks: int | None = None
+
+    @classmethod
+    def from_json(cls, json_data: dict) -> RawMine:
+        """Creates a RawMine from a JSON dictionary."""
+        return cls(**json_data)
+
+
+@dataclass(slots=True, frozen=True)
+class RawItem(RawTileEntity):
+    """Represents a raw item data."""
+
+    type: int
+
+    @classmethod
+    def from_json(cls, json_data: dict) -> RawItem:
+        """Creates a RawItem from a JSON dictionary."""
         return cls(**json_data)
 
 
@@ -131,6 +172,7 @@ class RawTank(RawTileEntity):
     direction: int
     turret: RawTurret
     health: int | None = None
+    secondary_item: int | None = None
 
     @classmethod
     def from_json(cls, json_data: dict) -> RawTank:
@@ -154,7 +196,7 @@ class RawTurret:
 
 
 @dataclass(slots=True, frozen=True)
-class RawZone:
+class RawZone:  # pylint: disable=too-many-instance-attributes
     """Represents a raw zone data."""
 
     x: int
@@ -256,25 +298,27 @@ class ResponseActionPayload(Payload, ABC):
 
 
 @dataclass(slots=True, frozen=True)
-class TankMovementPayload(ResponseActionPayload):
-    """Represents a TANK_MOVEMENT payload."""
+class MovementPayload(ResponseActionPayload):
+    """Represents a MOVEMENT payload."""
 
     direction: int
 
 
 @dataclass(slots=True, frozen=True)
-class TankRotationPayload(ResponseActionPayload):
-    """Represents a TANK_ROTATION payload."""
+class RotationPayload(ResponseActionPayload):
+    """Represents a ROTATION payload."""
 
     tank_rotation: int | None
     turret_rotation: int | None
 
 
 @dataclass(slots=True, frozen=True)
-class TankShootPayload(ResponseActionPayload):
-    """Represents a TANK_SHOOT payload."""
+class AbilityUsePayload(ResponseActionPayload):
+    """Represents an ABILITY_USE payload."""
+
+    ability_type: int
 
 
 @dataclass(slots=True, frozen=True)
-class ResponsePassPayload(ResponseActionPayload):
+class PassPayload(ResponseActionPayload):
     """Represents a PASS payload."""

@@ -16,7 +16,18 @@ from __future__ import annotations
 from typing import Protocol, Sequence, TYPE_CHECKING, runtime_checkable
 
 if TYPE_CHECKING:
-    from hackathon_bot.enums import Direction, ZoneStatus
+    from hackathon_bot.enums import (
+        BulletType,
+        Direction,
+        ItemType,
+        Orientation,
+        SecondaryItemType,
+        ZoneStatus,
+    )
+
+
+# pylint: disable=too-few-public-methods
+# pylint: disable=too-many-lines
 
 
 __all__ = (
@@ -31,6 +42,11 @@ __all__ = (
     "AgentTank",
     "Wall",
     "Bullet",
+    "Laser",
+    "DoubleBullet",
+    "Mine",
+    "Item",
+    "Tile",
     "LobbyData",
     "Zone",
     "NeutralZone",
@@ -122,11 +138,6 @@ class GameStatePlayer(Protocol):
         The color of the player in format `0xAABBGGRR`.
     ping: :class:`int`
         The ping of the player.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the player in the game state.
     """
 
     @property
@@ -157,11 +168,6 @@ class LobbyPlayer(Protocol):
         The nickname of the player.
     color: :class:`int`
         The color of the player in format `0xAABBGGRR`.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the player in the lobby.
     """
 
     @property
@@ -192,11 +198,6 @@ class GameEndPlayer(Protocol):
         The score of the player.
     kills: :class:`int`
         The number of players killed by the player.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the player in the game result.
     """
 
     @property
@@ -236,11 +237,9 @@ class Agent(GameStatePlayer, Protocol):
     ticks_to_regenerate: :class:`int` | `None`
         The number of ticks to regenerate your tank.
         If `None`, you are not dead.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints
-    for the agent in the game state.
+    is_using_radar: :class:`bool`
+        Whether you are using radar.
+        If `True`, you see the whole map.
     """
 
     @property
@@ -266,6 +265,13 @@ class Agent(GameStatePlayer, Protocol):
         If `None`, you are not dead.
         """
 
+    @property
+    def is_using_radar(self) -> bool:
+        """Whether you are using radar.
+
+        If `True`, you see the whole map.
+        """
+
 
 class PlayerTurret(Protocol):
     """Represents a turret of a player's tank.
@@ -274,11 +280,6 @@ class PlayerTurret(Protocol):
     ----------
     direction: :class:`Direction`
         The direction of the turret.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the turret of a player's tank.
     """
 
     @property
@@ -298,11 +299,6 @@ class AgentTurret(Protocol):
     ticks_to_regenerate_bullet: :class:`int` | `None`
         The number of ticks to regenerate a bullet.
         If `None`, the turret has full bullets.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the turret of your agent's tank.
     """
 
     @property
@@ -333,11 +329,6 @@ class PlayerTank(Protocol):
         The direction of the tank.
     turret: :class:`PlayerTurret`
         The turret of the tank.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the tank of a player.
     """
 
     __instancecheck_tank__: bool
@@ -370,11 +361,9 @@ class AgentTank(Protocol):
     health: :class:`int` | `None`
         The health of your tank.
         If `None`, your tank is dead.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the tank of your agent.
+    secondary_item: :class:`int` | `None`
+        The secondary item of your tank.
+        If `None`, your tank does not have a secondary item.
     """
 
     __instancecheck_tank__: bool
@@ -399,16 +388,17 @@ class AgentTank(Protocol):
         If `None`, your tank is dead.
         """
 
+    @property
+    def secondary_item(self) -> SecondaryItemType | None:
+        """The secondary item of your tank.
+
+        If `None`, your tank does not have a secondary item.
+        """
+
 
 @runtime_checkable
 class Wall(Protocol):
-    """Represents a wall in the game.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the wall in the game.
-    """
+    """Represents a wall in the game."""
 
     __instancecheck_wall__: bool
 
@@ -425,11 +415,8 @@ class Bullet(Protocol):
         The speed of the bullet.
     direction: :class:`Direction`
         The direction of the bullet.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the bullet in the game.
+    type: :class:`BulletType`
+        The type of the bullet.
     """
 
     __instancecheck_bullet__: bool
@@ -446,6 +433,139 @@ class Bullet(Protocol):
     def direction(self) -> Direction:
         """The direction of the bullet."""
 
+    @property
+    def type(self) -> BulletType:
+        """The type of the bullet."""
+
+
+@runtime_checkable
+class Laser(Protocol):
+    """Represents a laser in the game.
+
+    Attributes
+    ----------
+    id: :class:`int`
+        The unique identifier of the laser.
+    orientation: :class:`Orientation`
+        The orientation of the laser.
+    """
+
+    __instancecheck_laser__: bool
+
+    @property
+    def id(self) -> int:
+        """The unique identifier of the laser."""
+
+    @property
+    def orientation(self) -> Orientation:
+        """The orientation of the laser."""
+
+
+@runtime_checkable
+class DoubleBullet(Protocol):
+    """Represents a double bullet in the game.
+
+    Attributes
+    ----------
+    id: :class:`int`
+        The unique identifier of the bullet.
+    speed: :class:`float`
+        The speed of the bullet.
+    direction: :class:`Direction`
+        The direction of the bullet.
+    """
+
+    __instancecheck_bullet__: bool
+    __instancecheck_doublebullet__: bool
+
+    @property
+    def id(self) -> int:
+        """The unique identifier of the double bullet."""
+
+    @property
+    def speed(self) -> float:
+        """The speed of the double bullet."""
+
+    @property
+    def direction(self) -> Direction:
+        """The direction of the double bullet."""
+
+
+@runtime_checkable
+class Mine(Protocol):
+    """Represents a mine in the game.
+
+    Attributes
+    ----------
+    id: :class:`int`
+        The unique identifier of the mine.
+    explosion_remaining_ticks: :class:`int`
+        The remaining ticks to animate the mine explosion.
+    exploded: :class:`bool`
+        Whether the mine has exploded.
+    """
+
+    __instancecheck_mine__: bool
+
+    @property
+    def id(self) -> int:
+        """The unique identifier of the mine."""
+
+    @property
+    def explosion_remaining_ticks(self) -> int | None:
+        """The remaining ticks to animate the mine explosion.
+
+        This value is mainly used for visualization purposes,
+        but you can use it if you have a strategy that depends on it.
+
+        Take note that the mine explodes immediately after
+        a tank enters the tile containing the mine.
+        Then the remaining ticks start counting down.
+
+        If `None`, the mine has not exploded yet.
+        """
+
+    @property
+    def exploded(self) -> bool:
+        """Whether the mine has exploded.
+
+        If `True`, the mine has exploded
+        and only the explosion animation is visible.
+        You can enter the tile containing the mine safely.
+        """
+
+
+@runtime_checkable
+class Item(Protocol):
+    """Represents a secondary item on the tile, that can be picked up by a tank.
+
+    Item cannot be picked up if the tank already has a secondary item in its inventory.
+
+    If a tank or mine is in the same tile as the item, the item type is unknown.
+
+    Attributes
+    ----------
+    type: :class:`ItemType`
+        The type of the item.
+    """
+
+    __instancecheck_item__: bool
+
+    @property
+    def type(self) -> ItemType:
+        """The type of the item.
+
+        The item can be one of the following types:
+        - :class:`ItemType.UNKNOWN`
+        - :class:`ItemType.LASER`
+        - :class:`ItemType.DOUBLE_BULLET`
+        - :class:`ItemType.RADAR`
+        - :class:`ItemType.MINE`
+
+        The item type is unknown if a tank or mine
+        is in the same tile as the item.
+        """
+
 
 class LobbyData(Protocol):
     """Represents the lobby data.
@@ -458,11 +578,6 @@ class LobbyData(Protocol):
         The sequence of players in the lobby.
     server_settings: :class:`ServerSettings`
         The server settings.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the lobby data.
     """
 
     @property
@@ -506,8 +621,8 @@ class Zone(Protocol):
         if zone.status is ZoneStatus.NEUTRAL:
             zone_neutral: NeutralZone = zone
         elif zone.status is ZoneStatus.BEING_CAPTURED:
-            zone_captured: BeingCapturedZone = zone
-            >> zone.remaining_ticks  # Access the remaining ticks to capture the zone.
+            zone_being_captured: BeingCapturedZone = zone
+            >> zone_being_captured.remaining_ticks  # Access the remaining ticks to capture the zone.
         # etc.
 
     Attributes
@@ -524,11 +639,6 @@ class Zone(Protocol):
         The index of the zone.
     status: :class:`ZoneStatus`
         The status of the zone.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the zone in the game.
     """
 
     @property
@@ -574,11 +684,6 @@ class NeutralZone(Zone, Protocol):
         The index of the zone.
     status: :class:`ZoneStatus`
         The status of the zone.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the neutral zone in the game.
     """
 
     __instancecheck_neutralzone__: bool
@@ -606,11 +711,6 @@ class BeingCapturedZone(Zone, Protocol):
         The unique identifier of the player capturing the zone.
     remaining_ticks: :class:`int`
         The remaining ticks to capture the zone.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the zone being captured in the game.
     """
 
     __instancecheck_beingcapturedzone__: bool
@@ -644,11 +744,6 @@ class CapturedZone(Zone, Protocol):
         The status of the zone.
     player_id: :class:`str`
         The unique identifier of the player capturing the zone.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the captured zone in the game.
     """
 
     __instancecheck_capturedzone__: bool
@@ -679,11 +774,6 @@ class BeingContestedZone(Zone, Protocol):
     captured_by_id: :class:`str` | `None`
         The unique identifier of the player capturing
         the zone if any. Otherwise, `None`.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the zone being contested in the game.
     """
 
     __instancecheck_beingcontestedzone__: bool
@@ -720,11 +810,6 @@ class BeingRetakenZone(Zone, Protocol):
         The unique identifier of the player retaking the zone.
     remaining_ticks: :class:`int`
         The remaining ticks to retake the zone.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the zone being retaken in the game.
     """
 
     __instancecheck_beingretakenzone__: bool
@@ -743,7 +828,9 @@ class BeingRetakenZone(Zone, Protocol):
 
 
 if TYPE_CHECKING:
-    TileEntity = PlayerTank | AgentTank | Wall | Bullet
+    TileEntity = (
+        PlayerTank | AgentTank | Wall | Bullet | Laser | DoubleBullet | Mine | Item
+    )
 
 
 class Tile(Protocol):
@@ -751,8 +838,8 @@ class Tile(Protocol):
 
     Attributes
     ----------
-    entity: :class:`TileEntity` | `None`
-        The entity present on the tile.
+    entities: list[:class:`TileEntity`]
+        The entities present on the tile.
     zone: :class:`Zone` | `None`
         The zone in the tile.
     is_visible: :class:`bool`
@@ -760,17 +847,18 @@ class Tile(Protocol):
     """
 
     @property
-    def entity(self) -> TileEntity | None:
-        """The entity present on this tile.
+    def entities(self) -> list[TileEntity]:
+        """The entities present on the tile.
 
-        The entity can be one of the following tyypes:
+        The entity can be one of the following types:
         - :class:`Wall`
         - :class:`Bullet`
+        - :class:`Laser`
+        - :class:`DoubleBullet` *(see the important notes below)*
+        - :class:`Mine`
+        - :class:`Item`
         - :class:`PlayerTank`
-        - :class:`AgentTank`
-
-        If the tile does not contain an entity,
-        this property is `None`.
+        - :class:`AgentTank` *(see the important notes below)*
 
         Examples
         --------
@@ -779,45 +867,72 @@ class Tile(Protocol):
         use the `isinstance` function.
 
         .. code-block:: python
-            entity = tile.entity
+            for entity in tile.entities:
+                if isinstance(entity, Wall):
+                    # The entity is a wall.
+                elif isinstance(entity, Bullet):
+                    # The entity is a bullet.
+                    # Warning: This includes both bullet and double bullet.
+                    # See the important notes below.
+                elif isinstance(entity, Mine):
+                    # The entity is a mine.
+                elif isinstance(entity, Item):
+                    # The entity is an item.
+                elif isinstance(entity, PlayerTank):
+                    # The entity is a tank.
+                    # Warning: This includes both your agent's tank and other player tanks.
+                    # See the important notes below.
 
-            if isinstance(entity, Wall):
-                # The entity is a wall.
-            elif isinstance(entity, Bullet):
-                # The entity is a bullet.
-            elif isinstance(entity, PlayerTank):
-                # The entity is a tank.
-                # Warning: This includes both your agent's tank and other player tanks.
-                # See the important notes below.
+        If you have checked the type of the entity, you can easily access its attributes.
+
+        .. code-block:: python
+            for entity in tile.entities:
+                if isinstance(entity, Mine):
+                    >>> entity.exploded
+                elif isinstance(entity, PlayerTank):
+                    >>> entity.owner_id
+                    >>> entity.direction
+                    >>> entity.turret.direction
+
+        Without checking the type of the entity, the linter may suggest
+        all attributes of the entities in the tile, which can be misleading.
+
 
         Important Notes
         ---------------
 
-        Be careful when distinguishing between your agent's tank and other player tanks.
+        Be careful when distinguishing between your agent's tank and other player tanks
+        or between bullet and double bullet.
 
-        Since your agent's tank is also an instance of `PlayerTank`, it can mistakenly
-        match both types.
+        Since your agent's tank is also an instance of `PlayerTank`, and the `DoubleBullet` is
+        also an instance of `Bullet`, it can be mistenly identified as the other type.
 
         For example:
 
         .. code-block:: python
 
             tile: Tile
-            tile.entity: AgentTank
+            # Assume the first entity is your agent's tank
+            entity_agent: AgentTank = tile.entities[0]
+            # Assume the second entity is a double bullet
+            entity_double_bullet: DoubleBullet = tile.entities[1]
 
-            >>> isinstance(tile.entity, PlayerTank)  # True (!)
+            >>> isinstance(entity_agent, PlayerTank)  # True (!)
+            >>> isinstance(entity_double_bullet, Bullet)  # True (!)
 
         To accurately distinguish between them, follow this pattern:
 
         .. code-block:: python
 
-            tile: Tile
-            entity = tile.entity
-
-            if isinstance(entity, AgentTank):
-                # The entity is your agent’s tank.
-            elif isinstance(entity, PlayerTank):
+            if isinstance(entity_agent, AgentTank):
+                # The entity is your agent's tank.
+            elif isinstance(entity_agent, PlayerTank):
                 # The entity is another player's tank.
+
+            if isinstance(entity_double_bullet, DoubleBullet):
+                # The entity is a double bullet.
+            elif isinstance(entity_double_bullet, Bullet):
+                # The entity is a bullet.
 
         Using `elif` ensures that only one condition is triggered, allowing you
         to differentiate between the two tank types properly.
@@ -835,6 +950,12 @@ class Tile(Protocol):
     def is_visible(self) -> bool:
         """Whether the tile is visible
         from your agent's perspective.
+
+        Note
+        ----
+        Using radar does not affect this property.
+        The visibility of the tile is based on the
+        line of sight of your agent's tank.
         """
 
 
@@ -843,7 +964,7 @@ class Map(Protocol):
 
     Attributes
     ----------
-    tiles: tuple[tuple[:class:`TileT`]]
+    tiles: tuple[tuple[:class:`Tile`]]
         The tiles of the map in a 2D tuple,
         where the first index is the x-coordinate
         and the second index is the y-coordinate.
@@ -876,14 +997,10 @@ class GameState(Protocol):
     my_agent: :class:`Agent`
         Your agent in the game.
     players: Sequence[:class:`GameStatePlayer`]
-        The sequence of players in the game state.
+        The sequence of players in the game state,
+        including your agent.
     map: :class:`Map`
         The map of the game state.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the game state.
     """
 
     @property
@@ -910,7 +1027,9 @@ class GameState(Protocol):
 
     @property
     def players(self) -> Sequence[GameStatePlayer]:
-        """The sequence of players in the game state."""
+        """The sequence of players in the game state,
+        including your agent.
+        """
 
     @property
     def map(self) -> Map:
@@ -924,11 +1043,6 @@ class GameResult(Protocol):
     ----------
     players: Sequence[:class:`GameEndPlayer`]
         The sequence of players in the game result.
-
-    Notes
-    -----
-    This class is a protocol to provide type hints for
-    the game result.
     """
 
     @property

@@ -10,8 +10,8 @@ Movement
     Represents a movement response action.
 Rotation
     Represents a rotation response action.
-Shoot
-    Represents a shoot response action.
+AbilityUse
+    Represents an ability use response action.
 Pass
     Represents a pass response action.
 """
@@ -21,16 +21,17 @@ from dataclasses import dataclass, field
 from typing import ClassVar, final
 
 from .enums import (
+    Ability,
     MovementDirection,
     PacketType,
     RotationDirection,
 )
 from .payloads import (
     ResponseActionPayload,
-    TankMovementPayload,
-    TankRotationPayload,
-    TankShootPayload,
-    ResponsePassPayload,
+    MovementPayload,
+    RotationPayload,
+    AbilityUsePayload,
+    PassPayload,
 )
 
 
@@ -38,7 +39,7 @@ __all__ = (
     "ResponseAction",
     "Movement",
     "Rotation",
-    "Shoot",
+    "AbilityUse",
     "Pass",
 )
 
@@ -62,16 +63,15 @@ class Movement(ResponseAction):
     -------
 
     .. code-block:: python
-        from hackathon_bot import Movement, MovementDirection
         movement = Movement(MovementDirection.FORWARD)
     """
 
     movement_direction: MovementDirection
-    packet_type: ClassVar[PacketType] = PacketType.TANK_MOVEMENT
+    packet_type: ClassVar[PacketType] = PacketType.MOVEMENT
 
     @final
-    def to_payload(self, game_state_id: str) -> TankMovementPayload:
-        return TankMovementPayload(game_state_id, self.movement_direction)
+    def to_payload(self, game_state_id: str) -> MovementPayload:
+        return MovementPayload(game_state_id, self.movement_direction)
 
 
 @dataclass(slots=True, frozen=True)
@@ -82,17 +82,16 @@ class Rotation(ResponseAction):
     -------
 
     .. code-block:: python
-        from hackathon_bot import Rotation, RotationDirection
         rotation = Rotation(RotationDirection.LEFT, RotationDirection.RIGHT)
     """
 
     tank_rotation_direction: RotationDirection | None
     turret_rotation_direction: RotationDirection | None
-    packet_type: ClassVar[PacketType] = PacketType.TANK_ROTATION
+    packet_type: ClassVar[PacketType] = PacketType.ROTATION
 
     @final
-    def to_payload(self, game_state_id: str) -> TankRotationPayload:
-        return TankRotationPayload(
+    def to_payload(self, game_state_id: str) -> RotationPayload:
+        return RotationPayload(
             game_state_id,
             self.tank_rotation_direction,
             self.turret_rotation_direction,
@@ -100,22 +99,35 @@ class Rotation(ResponseAction):
 
 
 @dataclass(slots=True, frozen=True)
-class Shoot(ResponseAction):
-    """Represents a shoot response action.
+class AbilityUse(ResponseAction):
+    """Represents an ability use response action.
 
     Example
     -------
 
     .. code-block:: python
-        from hackathon_bot import Shoot
-        shoot = Shoot()
+        # Fire bullet (basic attack)
+        ability_use = AbilityUse(Ability.FIRE_BULLET)
+
+        # Fire double bullet
+        ability_use = AbilityUse(Ability.FIRE_DOUBLE_BULLET)
+
+        # Use laser
+        ability_use = AbilityUse(Ability.LASER)
+
+        # Use radar
+        ability_use = AbilityUse(Ability.RADAR)
+
+        # Drop mine
+        ability_use = AbilityUse(Ability.DROP_MINE)
     """
 
-    packet_type: ClassVar[PacketType] = PacketType.TANK_SHOOT
+    ability: Ability
+    packet_type: ClassVar[PacketType] = PacketType.ABILITY_USE
 
     @final
-    def to_payload(self, game_state_id: str) -> TankShootPayload:
-        return TankShootPayload(game_state_id)
+    def to_payload(self, game_state_id: str) -> AbilityUsePayload:
+        return AbilityUsePayload(game_state_id, self.ability)
 
 
 @dataclass(slots=True, frozen=True)
@@ -126,12 +138,11 @@ class Pass(ResponseAction):
     -------
 
     .. code-block:: python
-        from hackathon_bot import Pass
         pass_ = Pass()
     """
 
-    packet_type: ClassVar[PacketType] = PacketType.RESPONSE_PASS
+    packet_type: ClassVar[PacketType] = PacketType.PASS
 
     @final
-    def to_payload(self, game_state_id: str) -> TankShootPayload:
-        return ResponsePassPayload(game_state_id)
+    def to_payload(self, game_state_id: str) -> AbilityUsePayload:
+        return PassPayload(game_state_id)

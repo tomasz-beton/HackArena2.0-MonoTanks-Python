@@ -15,17 +15,6 @@ Then, create an instance of the bot and run it using the `run` method.
 
 .. code-block:: python
 
-    import asyncio
-
-    from hackathon_bot import (
-        HackathonBot,
-        GameState,
-        GameResult,
-        LobbyData,
-        ResponseAction,
-        WarningType,
-    )
-
     class MyBot(HackathonBot):
 
         def on_lobby_data_received(self, lobby_data: LobbyData) -> None:
@@ -72,6 +61,8 @@ from .payloads import (
 )
 from .protocols import GameState, GameResult, LobbyData
 
+__all__ = ("HackathonBot",)
+
 
 class HackathonBot(ABC):
     """Represents the hackathon bot.
@@ -85,15 +76,6 @@ class HackathonBot(ABC):
     Then, create an instance of the bot and run it using the `run` method.
 
     .. code-block:: python
-
-        from hackathon_bot import (
-            HackathonBot,
-            GameState,
-            GameResult,
-            LobbyData,
-            ResponseAction,
-            WarningType,
-        )
 
         class MyBot(HackathonBot):
 
@@ -116,27 +98,15 @@ class HackathonBot(ABC):
             bot.run()
 
     The `next_move` method should return a response action.
-    The response action can be a `Movement`, `Rotation`, `Shoot` or `Pass` action.
+    The response action can be a `Movement`, `Rotation`, `AbilityUse` or `Pass` action.
 
     .. code-block:: python
 
-        from hackathon_bot import (
-            Movement,
-            MovementDirection,
-            Rotation,
-            RotationDirection,
-            Shoot,
-            Pass,
-        )
-
         async def next_move(self, game_state: GameState) -> ResponseAction:
-            return Movement(MovementDirection.FORWARD)
-            # or
-            return Rotation(RotationDirection.LEFT, None)
-            # or
-            return Shoot()
-            # or
-            return Pass()  # to skip the tick
+            response = Movement(MovementDirection.FORWARD)
+            response = Rotation(RotationDirection.LEFT, None)
+            response = AbilityUse(Ability.FIRE_BULLET)
+            response = Pass()  # to skip the tick
     """
 
     _lobby_data: LobbyDataModel
@@ -177,34 +147,28 @@ class HackathonBot(ABC):
 
         Examples
         --------
-        The response action can be a `Movement`, `Rotation`, `Shoot` or `Pass` action.
+        The response action can be a `Movement`, `Rotation`, `AbilityUse` or `Pass` action.
 
         .. code-block:: python
-
-            from hackathon_bot import (
-                HackathonBot,
-                GameState,
-                ResponseAction,
-                Movement,
-                MovementDirection,
-                Rotation,
-                RotationDirection,
-                Shoot,
-                Pass,
-            )
 
             class MyBot(HackathonBot):
 
                 # Other methods
 
                 def next_move(self, game_state: GameState) -> ResponseAction:
-                    return Movement(MovementDirection.FORWARD)
-                    # or
-                    return Rotation(RotationDirection.LEFT, None)
-                    # or
-                    return Shoot()
-                    # or
-                    return Pass()  # to skip the tick
+                    # Move (forward)
+                    response = Movement(MovementDirection.FORWARD)
+
+                    # Rotate (tank left)
+                    response = Rotation(RotationDirection.LEFT, None)
+
+                    # Use an ability (fire bullet - basic ability)
+                    response = AbilityUse(Ability.FIRE_BULLET)
+
+                    # Skip the tick
+                    response = Pass()
+
+                    return response
 
         Notes
         -----
@@ -369,8 +333,6 @@ class HackathonBot(ABC):
         --------
 
         .. code-block:: python
-
-            from hackathon_bot import HackathonBot
 
             class MyBot(HackathonBot):
                 # Your bot implementation here

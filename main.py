@@ -1,11 +1,4 @@
-from hackathon_bot import (
-    HackathonBot,
-    LobbyData,
-    GameState,
-    GameResult,
-    ResponseAction,
-    WarningType,
-)
+from hackathon_bot import *
 
 
 class MyBot(HackathonBot):

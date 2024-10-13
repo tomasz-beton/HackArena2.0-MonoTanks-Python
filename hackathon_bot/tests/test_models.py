@@ -5,6 +5,7 @@ import pytest
 from hackathon_bot.enums import Direction, ZoneStatus
 from hackathon_bot.models import (
     BulletModel,
+    MineModel,
     PlayerModel,
     TankModel,
     TurretModel,
@@ -22,6 +23,7 @@ from hackathon_bot.payloads import (
     LobbyDataPayload,
     RawBullet,
     RawMap,
+    RawMine,
     RawPlayer,
     RawTank,
     RawTileObject,
@@ -453,13 +455,14 @@ def test_Map_from_raw():
         ┌ ─ ┬ ─ ┬ ─ ┐
         │ W │   │ A │
         ├ ─ ┼ ─ ┼ ─ ┤
-        │ B │ T │   │
+        │ B │ T │M_T│
         └ ─ ┴ ─ ┴ ─ ┘
     Where:
         W - wall
         B - bullet
         T - tank
         A - agent tank
+        M_T - mine and tank
 
     The visibility of the tiles is as follows:
         ┌ ─ ┬ ─ ┬ ─ ┐
@@ -506,7 +509,20 @@ def test_Map_from_raw():
                     ),
                 ),
             ),
-            (()),
+            (
+                RawTileObject(
+                    "tank",
+                    RawTank(
+                        "1af32fbs-1cvd-4164-8a13-vx67ab3s5623",
+                        Direction.UP,
+                        RawTurret(Direction.UP),
+                    ),
+                ),
+                RawTileObject(
+                    "mine",
+                    RawMine(4, None),
+                ),
+            ),
         ),
     )
 
@@ -514,7 +530,6 @@ def test_Map_from_raw():
     zones = (RawZone(**zone_json_data_without_status, status="neutral"),)
     raw_map = RawMap(tiles, zones, visibility)
 
-    print(raw_map.visibility)
     map_ = MapModel.from_raw(raw_map, "7ed26efb-135d-4cd7-8bc7-c867a0b36d77")
 
     # Check if the tiles attribute is a tuple of tuples of TileModel instances.
@@ -543,12 +558,23 @@ def test_Map_from_raw():
     assert map_.tiles[2][1].zone is None
 
     # Check if the entities of the tiles are set correctly.
-    assert isinstance(map_.tiles[0][0].entity, WallModel)
-    assert isinstance(map_.tiles[0][1].entity, BulletModel)
-    assert map_.tiles[1][0].entity is None
-    assert isinstance(map_.tiles[1][1].entity, TankModel)
-    assert isinstance(map_.tiles[2][0].entity, TankModel)
-    assert map_.tiles[2][1].entity is None
+    assert len(map_.tiles[0][0].entities) == 1
+    assert isinstance(map_.tiles[0][0].entities[0], WallModel)
+
+    assert len(map_.tiles[0][1].entities) == 1
+    assert isinstance(map_.tiles[0][1].entities[0], BulletModel)
+
+    assert len(map_.tiles[1][0].entities) == 0
+
+    assert len(map_.tiles[1][1].entities) == 1
+    assert isinstance(map_.tiles[1][1].entities[0], TankModel)
+
+    assert len(map_.tiles[2][0].entities) == 1
+    assert isinstance(map_.tiles[2][0].entities[0], TankModel)
+
+    assert len(map_.tiles[2][1].entities) == 2
+    assert isinstance(map_.tiles[2][1].entities[0], TankModel)
+    assert isinstance(map_.tiles[2][1].entities[1], MineModel)
 
     # Check if the zones attribute is a tuple of ZoneModel instances
     # and has the correct length.

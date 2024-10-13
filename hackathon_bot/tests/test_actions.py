@@ -4,11 +4,12 @@ import pytest
 from hackathon_bot import (
     Movement,
     Rotation,
-    Shoot,
+    AbilityUse,
     Pass,
     MovementDirection,
     RotationDirection,
 )
+from hackathon_bot.enums import Ability
 
 # pylint: disable=invalid-name
 
@@ -51,13 +52,15 @@ def test_Rotation_to_payload(tank_rotation_direction, turret_rotation_direction)
     assert payload.turret_rotation == turret_rotation_direction
 
 
-def test_Shoot_to_payload():
+@pytest.mark.parametrize("ability", tuple(Ability))
+def test_AbilityUse_to_payload(ability):
     """Test Shoot.to_payload method."""
 
-    shoot = Shoot()
+    shoot = AbilityUse(ability)
     payload = shoot.to_payload("game_state_id")
 
     assert payload.game_state_id == "game_state_id"
+    assert payload.ability_type == ability
 
 
 def test_Pass_to_payload():

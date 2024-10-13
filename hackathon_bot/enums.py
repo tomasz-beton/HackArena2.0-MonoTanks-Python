@@ -8,13 +8,36 @@ MovementDirection
     Represents a movement direction.
 RotationDirection
     Represents a rotation direction.
+Orientation
+    Represents an orientation.
+SecondaryItemType
+    Represents a secondary item type.
+ItemType
+    Represents an item type on the tile.
+Ability
+    Represents an ability.
 ZoneStatus
     Represents the status of a zone.
 PacketType
     Represents the type of a packet.
+WarningType
+    Represents the type of a warning.
 """
 
 from enum import Enum, IntEnum
+
+__all__ = (
+    "Direction",
+    "MovementDirection",
+    "RotationDirection",
+    "Orientation",
+    "SecondaryItemType",
+    "ItemType",
+    "Ability",
+    "ZoneStatus",
+    "PacketType",
+    "WarningType",
+)
 
 
 class Direction(IntEnum):
@@ -67,6 +90,105 @@ class RotationDirection(IntEnum):
 
     LEFT = 0
     RIGHT = 1
+
+
+class Orientation(IntEnum):
+    """Represents an orientation.
+
+    Attributes
+    ----------
+    HORIZONTAL: :class:`int`
+        Represents the horizontal orientation.
+    VERTICAL: :class:`int`
+        Represents the vertical orientation.
+    """
+
+    HORIZONTAL = 0
+    VERTICAL = 1
+
+
+class BulletType(IntEnum):
+    """Represents a bullet type.
+
+    Attributes
+    ----------
+    BASIC: :class:`int`
+        Represents a basic bullet type.
+    DOUBLE: :class:`int`
+        Represents a double bullet type.
+    """
+
+    BASIC = 0
+    DOUBLE = 1
+
+
+class SecondaryItemType(IntEnum):
+    """Represents a secondary item type.
+
+    Attributes
+    ----------
+    LASER: :class:`int`
+        Represents a laser item type.
+    DOUBLE_BULLET: :class:`int`
+        Represents a double bullet item type.
+    RADAR: :class:`int`
+        Represents a radar item type.
+    MINE: :class:`int`
+        Represents a mine item type.
+    """
+
+    LASER = 1
+    DOUBLE_BULLET = 2
+    RADAR = 3
+    MINE = 4
+
+
+class ItemType(IntEnum):
+    """Represents a item type on the tile.
+
+    Attributes
+    ----------
+    UNKNOWN: :class:`int`
+        Represents an unknown item type.
+    LASER: :class:`int`
+        Represents a laser item type.
+    DOUBLE_BULLET: :class:`int`
+        Represents a double bullet item type.
+    RADAR: :class:`int`
+        Represents a radar item type.
+    MINE: :class:`int`
+        Represents a mine item type.
+    """
+
+    UNKNOWN = 0
+    LASER = 1
+    DOUBLE_BULLET = 2
+    RADAR = 3
+    MINE = 4
+
+
+class Ability(IntEnum):
+    """Represents an ability.
+
+    Attributes
+    ----------
+    FIRE_BULLET: :class:`int`
+        Represents the fire bullet ability.
+    USE_LASER: :class:`int`
+        Represents the use laser ability.
+    FIRE_DOUBLE_BULLET: :class:`int`
+        Represents the fire double bullet ability.
+    USE_RADAR: :class:`int`
+        Represents the use radar ability.
+    DROP_MINE: :class:`int`
+        Represents the drop mine ability.
+    """
+
+    FIRE_BULLET = 0
+    USE_LASER = 1
+    FIRE_DOUBLE_BULLET = 2
+    USE_RADAR = 3
+    DROP_MINE = 4
 
 
 class ZoneStatus(str, Enum):
@@ -130,14 +252,14 @@ class PacketType(IntEnum):
         Represents a game end packet.
     PLAYER_RESPONSE_ACTION_GROUP: :class:`int`
         Represents a 4-bit group for player response action packets.
-    TANK_MOVEMENT: :class:`int`
-        Represents a tank movement packet.
-    TANK_ROTATION: :class:`int`
-        Represents a tank rotation packet.
-    TANK_SHOOT: :class:`int`
-        Represents a tank shoot packet.
-    RESPONSE_PASS: :class:`int`
-        Represents a response pass packet.
+    MOVEMENT: :class:`int`
+        Represents a movement response packet.
+    ROTATION: :class:`int`
+        Represents a rotation response packet.
+    ABILITY_USE: :class:`int`
+        Represents an ability use response packet.
+    PASS: :class:`int`
+        Represents a pass response packet.
     WARNING_GROUP: :class:`int`
         Represents a 4-bit group for warning packets.
     CUSTOM_WARNING: :class:`int`
@@ -179,10 +301,10 @@ class PacketType(IntEnum):
     GAME_END = GAME_STATE_GROUP | HAS_PAYLOAD | 0x3
 
     PLAYER_RESPONSE_ACTION_GROUP = 0x40
-    TANK_MOVEMENT = PLAYER_RESPONSE_ACTION_GROUP | HAS_PAYLOAD | 0x1
-    TANK_ROTATION = PLAYER_RESPONSE_ACTION_GROUP | HAS_PAYLOAD | 0x2
-    TANK_SHOOT = PLAYER_RESPONSE_ACTION_GROUP | HAS_PAYLOAD | 0x3
-    RESPONSE_PASS = PLAYER_RESPONSE_ACTION_GROUP | HAS_PAYLOAD | 0x7
+    MOVEMENT = PLAYER_RESPONSE_ACTION_GROUP | HAS_PAYLOAD | 0x1
+    ROTATION = PLAYER_RESPONSE_ACTION_GROUP | HAS_PAYLOAD | 0x2
+    ABILITY_USE = PLAYER_RESPONSE_ACTION_GROUP | HAS_PAYLOAD | 0x3
+    PASS = PLAYER_RESPONSE_ACTION_GROUP | HAS_PAYLOAD | 0x7
 
     WARNING_GROUP = 0xE0
     CUSTOM_WARNING = WARNING_GROUP | HAS_PAYLOAD | 0x1
