@@ -239,7 +239,7 @@ class HackathonBot(ABC):
                     print("I am ready to fight!")
         """
 
-        print("The game is starting")
+        print("The game is starting...")
 
     @final
     async def _send_packet(
@@ -304,6 +304,16 @@ class HackathonBot(ABC):
         self, websocket: WebSocket, message: websockets.Data
     ) -> None:
         data = humps.decamelize(json.loads(message))
+
+        packet_number = data["type"]
+
+        if packet_number & 0xF0 == PacketType.ERROR_GROUP:
+            payload = data.get("payload")
+            if message := payload.get("message") if payload else None:
+                print(f"Error: {message}")
+            else:
+                print(f"Error: {packet_number} ({hex(packet_number)})")
+            return
 
         packet_type = PacketType(data["type"])
 

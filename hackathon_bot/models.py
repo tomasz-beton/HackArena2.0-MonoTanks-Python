@@ -225,7 +225,7 @@ class ZoneModel(ABC):  # pylint: disable=too-many-instance-attributes
         elif status == ZoneStatus.BEING_RETAKEN:
             zone = BeingRetakenZoneModel
         else:
-            raise ValueError(f"Unknown zone status: {status}")
+            raise ValueError(f"Unknown zone status: {status}")  # pragma: no cover
 
         return zone(**data)
 

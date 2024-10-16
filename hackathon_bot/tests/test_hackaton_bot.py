@@ -300,6 +300,38 @@ def test_handle_messages__warning(packet_type, message) -> None:
         mock_handle_warning.assert_called_once_with(packet_type, message)
 
 
+def test_handle_messages__error__with_message() -> None:
+    """Test _handle_messages method with a warning packet."""
+
+    ws = Mock()
+    bot = TestBot()
+
+    with patch("builtins.print") as mock_print:
+        bot._handle_messages(
+            ws,
+            json.dumps(
+                {"type": PacketType.ERROR_GROUP, "payload": {"message": "message"}}
+            ),
+        )
+
+        mock_print.assert_called_once()
+
+
+def test_handle_messages__error__without_message() -> None:
+    """Test _handle_messages method with a warning packet."""
+
+    ws = Mock()
+    bot = TestBot()
+
+    with patch("builtins.print") as mock_print:
+        bot._handle_messages(
+            ws,
+            json.dumps({"type": PacketType.ERROR_GROUP, "payload": {}}),
+        )
+
+        mock_print.assert_called_once()
+
+
 def test_handle_messages__connection_accepted() -> None:
     """Test _handle_messages method with a connection accepted packet."""
 
