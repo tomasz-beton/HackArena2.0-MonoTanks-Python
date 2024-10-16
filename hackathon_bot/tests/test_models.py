@@ -2,9 +2,11 @@
 
 import pytest
 
-from hackathon_bot.enums import Direction, ZoneStatus
+from hackathon_bot.enums import BulletType, Direction, ZoneStatus
 from hackathon_bot.models import (
     BulletModel,
+    ItemModel,
+    LaserModel,
     MineModel,
     PlayerModel,
     TankModel,
@@ -22,6 +24,8 @@ from hackathon_bot.payloads import (
     GameStatePayload,
     LobbyDataPayload,
     RawBullet,
+    RawItem,
+    RawLaser,
     RawMap,
     RawMine,
     RawPlayer,
@@ -62,7 +66,7 @@ def test_Player_from_raw__game_state__is_agent__is_not_dead():
     assert player.kills is None
 
 
-def test_BasePlayer_from_raw__game_state__is_agent__is_dead():
+def test_PlayerModel_from_raw__game_state__is_agent__is_dead():
     """Test PlayerModel.from_raw method.
 
     The player is an agent and is dead.
@@ -88,7 +92,7 @@ def test_BasePlayer_from_raw__game_state__is_agent__is_dead():
     assert player.kills is None
 
 
-def test_BasePlayer_from_raw__game_state__is_not_agent():
+def test_PlayerModel_from_raw__game_state__is_not_agent():
     """Test PlayerModel.from_raw method.
 
     The player is not an agent.
@@ -114,7 +118,7 @@ def test_BasePlayer_from_raw__game_state__is_not_agent():
     assert player.ticks_to_regenerate is None
 
 
-def test_BasePlayer_from_raw__lobby_data():
+def test_PlayerModel_from_raw__lobby_data():
     """Test PlayerModel.from_raw method."""
 
     raw_player = RawPlayer(
@@ -136,7 +140,7 @@ def test_BasePlayer_from_raw__lobby_data():
     assert player.ticks_to_regenerate is None
 
 
-def test_BasePlayer_from_raw__game_end():
+def test_PlayerModel_from_raw__game_end():
     """Test PlayerModel.from_raw method."""
 
     raw_player = RawPlayer(
@@ -160,7 +164,7 @@ def test_BasePlayer_from_raw__game_end():
     assert player.ticks_to_regenerate is None
 
 
-def test_BaseTurret_from_raw__player_is_agent__full_bullets():
+def test_TurretModel_from_raw__player_is_agent__full_bullets():
     """Test TurretModel.from_raw method.
 
     The player is an agent and has full bullets.
@@ -179,7 +183,7 @@ def test_BaseTurret_from_raw__player_is_agent__full_bullets():
     assert turret.ticks_to_regenerate_bullet is None
 
 
-def test_BaseTurret_from_raw__player_is_agent__regenerating_bullets():
+def test_TurretModel_from_raw__player_is_agent__regenerating_bullets():
     """Test TurretModel.from_raw method.
 
     The player is an agent and is regenerating bullets.
@@ -198,7 +202,7 @@ def test_BaseTurret_from_raw__player_is_agent__regenerating_bullets():
     assert turret.ticks_to_regenerate_bullet == 10
 
 
-def test_BaseTurret_from_raw__player_is_not_agent():
+def test_TurretModel_from_raw__player_is_not_agent():
     """Test TurretModel.from_raw method.
 
     The player is not an agent.
@@ -213,7 +217,7 @@ def test_BaseTurret_from_raw__player_is_not_agent():
     assert turret.ticks_to_regenerate_bullet is None
 
 
-def test_BaseTank_from_raw__player_is_agent():
+def test_TankModel_from_raw__player_is_agent():
     """Test TankModel.from_raw method.
 
     The player is an agent.
@@ -234,7 +238,7 @@ def test_BaseTank_from_raw__player_is_agent():
     assert tank.health == 100
 
 
-def test_BaseTank_from_raw__player_is_not_agent():
+def test_TankModel_from_raw__player_is_not_agent():
     """Test TankModel.from_raw method.
 
     The player is not an agent.
@@ -256,15 +260,75 @@ def test_BaseTank_from_raw__player_is_not_agent():
     assert tank.health is None
 
 
-def test_BaseBullet_from_raw():
+def test_BulletModel_from_raw__basic():
     """Test BulletModel.from_raw method."""
 
-    raw_bullet = RawBullet(123, 2, Direction.DOWN)
+    raw_bullet = RawBullet(123, 2, Direction.DOWN, "basic")
     bullet = BulletModel.from_raw(raw_bullet)
 
     assert bullet.id == 123
     assert bullet.speed == 2
     assert bullet.direction == Direction.DOWN
+    assert bullet.type == BulletType.BASIC
+
+
+def test_BulletModel_from_raw__double():
+    """Test BulletModel.from_raw method."""
+
+    raw_bullet = RawBullet(1233, 2, Direction.LEFT, "double")
+    bullet = BulletModel.from_raw(raw_bullet)
+
+    assert bullet.id == 1233
+    assert bullet.speed == 2
+    assert bullet.direction == Direction.LEFT
+    assert bullet.type == BulletType.DOUBLE
+
+
+def test_LaserModel_from_raw():
+    """Test LaserModel.from_raw method."""
+
+    raw_laser = RawLaser(123, Direction.DOWN)
+    laser = LaserModel.from_raw(raw_laser)
+
+    assert laser.id == 123
+    assert laser.orientation == Direction.DOWN
+
+
+def test_MineModel_from_raw__not_exploding():
+    """Test MineModel.from_raw method.
+
+    The mine is not exploding.
+    """
+
+    raw_mine = RawMine(123, None)
+    mine = MineModel.from_raw(raw_mine)
+
+    assert mine.id == 123
+    assert mine.explosion_remaining_ticks is None
+    assert mine.exploded is False
+
+
+def test_MineModel_from_raw__exploding():
+    """Test MineModel.from_raw method.
+
+    The mine is exploding.
+    """
+
+    raw_mine = RawMine(123, 10)
+    mine = MineModel.from_raw(raw_mine)
+
+    assert mine.id == 123
+    assert mine.explosion_remaining_ticks == 10
+    assert mine.exploded is True
+
+
+def test_ItemModel_from_raw():
+    """Test ItemModel.from_raw method."""
+
+    raw_item = RawItem(1)
+    item = ItemModel.from_raw(raw_item)
+
+    assert item.type == 1
 
 
 zone_json_data_without_status = {
@@ -276,8 +340,8 @@ zone_json_data_without_status = {
 }
 
 
-def test_BaseZone_from_raw():
-    """Test base ZoneModel.from_raw method."""
+def test_ZoneModel_from_raw():
+    """Test ZoneModel.from_raw method."""
 
     # The status is provided to avoid the ValueError exception.
     # The status attribute is tested separately in other tests.
@@ -291,7 +355,7 @@ def test_BaseZone_from_raw():
     assert zone.index == 65
 
 
-def test_BaseZone_from_raw__neutral_status():
+def test_ZoneModel_from_raw__neutral_status():
     """Test ZoneModel.from_raw method with neutral status."""
 
     raw_zone = RawZone(**zone_json_data_without_status, status="neutral")
@@ -306,7 +370,7 @@ def test_BaseZone_from_raw__neutral_status():
     assert zone.remaining_ticks is None
 
 
-def test_BaseZone_from_raw__being_captured_status():
+def test_ZoneModel_from_raw__being_captured_status():
     """Test ZoneModel.from_raw method with being_captured status."""
 
     raw_zone = RawZone(
@@ -327,7 +391,7 @@ def test_BaseZone_from_raw__being_captured_status():
     assert zone.retaken_by_id is None
 
 
-def test_BaseZone_from_raw__captured_status():
+def test_ZoneModel_from_raw__captured_status():
     """Test ZoneModel.from_raw method with captured status."""
 
     raw_zone = RawZone(
@@ -347,7 +411,7 @@ def test_BaseZone_from_raw__captured_status():
     assert zone.remaining_ticks is None
 
 
-def test_BaseZone_from_raw__being_retaken_status():
+def test_ZoneModel_from_raw__being_retaken_status():
     """Test ZoneModel.from_raw method with being_retaken status."""
 
     raw_zone = RawZone(
@@ -370,7 +434,7 @@ def test_BaseZone_from_raw__being_retaken_status():
     assert zone.player_id is None
 
 
-def test_BaseZone_from_raw__being_contested_status__not_captured():
+def test_ZoneModel_from_raw__being_contested_status__not_captured():
     """Test ZoneModel.from_raw method with being_contested status and not captured."""
 
     raw_zone = RawZone(
@@ -391,7 +455,7 @@ def test_BaseZone_from_raw__being_contested_status__not_captured():
     assert zone.remaining_ticks is None
 
 
-def test_BaseZone_from_raw__being_contested_status__captured():
+def test_ZoneModel_from_raw__being_contested_status__captured():
     """Test ZoneModel.from_raw method with being_contested status and captured."""
 
     raw_zone = RawZone(
@@ -452,37 +516,39 @@ def test_Map_from_raw():
     """Test MapModel.from_raw method.
 
     The map has six tiles:
-        ┌ ─ ┬ ─ ┬ ─ ┐
-        │ W │   │ A │
-        ├ ─ ┼ ─ ┼ ─ ┤
-        │ B │ T │M_T│
-        └ ─ ┴ ─ ┴ ─ ┘
+        ┌ ─ ┬ ─ ┬ ─ ┬ ─ ┐
+        │ W │   │ A │ L │
+        ├ ─ ┼ ─ ┼ ─ ┼ ─ ┤
+        │ B │ T │M_T│ I │
+        └ ─ ┴ ─ ┴ ─ ┴ ─ ┘
     Where:
         W - wall
         B - bullet
         T - tank
         A - agent tank
         M_T - mine and tank
+        L - laser
+        I - item
 
     The visibility of the tiles is as follows:
-        ┌ ─ ┬ ─ ┬ ─ ┐
-        │ 1 │ 0 │ 1 │
-        ├ ─ ┼ ─ ┼ ─ ┤
-        │ 1 │ 1 │ 1 │
-        └ ─ ┴ ─ ┴ ─ ┘
+        ┌ ─ ┬ ─ ┬ ─ ┬ ─ ┐
+        │ 1 │ 0 │ 1 │ 1 │
+        ├ ─ ┼ ─ ┼ ─ ┼ ─ ┤
+        │ 1 │ 1 │ 1 │ 1 │
+        └ ─ ┴ ─ ┴ ─ ┴ ─ ┘
 
     The map has one zone with neutral status.
-        ┌ ─ ┬ ─ ┬ ─ ┐
-        │ Z │ Z │   │
-        ├ ─ ┼ ─ ┼ ─ ┤
-        │ Z │ Z │   │
-        └ ─ ┴ ─ ┴ ─ ┘
+        ┌ ─ ┬ ─ ┬ ─ ┬ ─ ┐
+        │ Z │ Z │   │   │
+        ├ ─ ┼ ─ ┼ ─ ┼ ─ ┤
+        │ Z │ Z │   │   │
+        └ ─ ┴ ─ ┴ ─ ┴ ─ ┘
     """
 
     tiles = (
         (
             (RawTileObject("wall", RawWall()),),
-            (RawTileObject("bullet", RawBullet(1, 2, Direction.UP)),),
+            (RawTileObject("bullet", RawBullet(1, 2, Direction.UP, "basic")),),
         ),
         (
             (()),
@@ -524,9 +590,23 @@ def test_Map_from_raw():
                 ),
             ),
         ),
+        (
+            (
+                RawTileObject(
+                    "laser",
+                    RawLaser(555, 1),
+                ),
+            ),
+            (
+                RawTileObject(
+                    "item",
+                    RawItem(2),
+                ),
+            ),
+        ),
     )
 
-    visibility = ("101", "111")
+    visibility = ("1011", "1111")
     zones = (RawZone(**zone_json_data_without_status, status="neutral"),)
     raw_map = RawMap(tiles, zones, visibility)
 
@@ -538,7 +618,7 @@ def test_Map_from_raw():
     assert all(isinstance(tile, TileModel) for row in map_.tiles for tile in row)
 
     # Check if the tiles attribute contains the correct number of tiles.
-    assert len(map_.tiles) == 3
+    assert len(map_.tiles) == 4
     assert all(len(row) == 2 for row in map_.tiles)
 
     # Check if the is_visible attribute of the tiles is set correctly.
@@ -548,6 +628,8 @@ def test_Map_from_raw():
     assert map_.tiles[1][1].is_visible is True
     assert map_.tiles[2][0].is_visible is True
     assert map_.tiles[2][1].is_visible is True
+    assert map_.tiles[3][0].is_visible is True
+    assert map_.tiles[3][1].is_visible is True
 
     # Check if the zone attribute of the tiles is set correctly.
     assert isinstance(map_.tiles[0][0].zone, ZoneModel)
@@ -556,6 +638,8 @@ def test_Map_from_raw():
     assert isinstance(map_.tiles[1][1].zone, ZoneModel)
     assert map_.tiles[2][0].zone is None
     assert map_.tiles[2][1].zone is None
+    assert map_.tiles[3][0].zone is None
+    assert map_.tiles[3][1].zone is None
 
     # Check if the entities of the tiles are set correctly.
     assert len(map_.tiles[0][0].entities) == 1
@@ -575,6 +659,12 @@ def test_Map_from_raw():
     assert len(map_.tiles[2][1].entities) == 2
     assert isinstance(map_.tiles[2][1].entities[0], TankModel)
     assert isinstance(map_.tiles[2][1].entities[1], MineModel)
+
+    assert len(map_.tiles[3][0].entities) == 1
+    assert isinstance(map_.tiles[3][0].entities[0], LaserModel)
+
+    assert len(map_.tiles[3][1].entities) == 1
+    assert isinstance(map_.tiles[3][1].entities[0], ItemModel)
 
     # Check if the zones attribute is a tuple of ZoneModel instances
     # and has the correct length.

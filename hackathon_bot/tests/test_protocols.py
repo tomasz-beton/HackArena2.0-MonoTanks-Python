@@ -15,7 +15,7 @@ combinations of similar model applications.
 import pytest
 
 from hackathon_bot import models
-from hackathon_bot.enums import Direction, ZoneStatus
+from hackathon_bot.enums import BulletType, Direction, ZoneStatus
 from hackathon_bot.models import (
     AgentTankModel,
     WallModel,
@@ -37,7 +37,7 @@ zone = models.ZoneModel(0, 0, 1, 1, 65, ZoneStatus.NEUTRAL)
 turret = models.TurretModel(Direction.LEFT)
 player_tank = models.TankModel("id", Direction.LEFT, turret)
 agent_tank = models.AgentTankModel("id", Direction.LEFT, turret)
-bullet = models.BulletModel(1, 1.0, Direction.LEFT)
+bullet = models.BulletModel(1, BulletType.BASIC, 1.0, Direction.LEFT)
 
 
 @pytest.mark.parametrize(

@@ -115,14 +115,13 @@ class RawBullet(RawTileEntity):
     """Represents a raw bullet data."""
 
     id: int
-    speed: int | None = None
-    direction: int | None = None
-    type: str = "bullet"
+    speed: int | None
+    direction: int | None
+    type: str
 
     @classmethod
     def from_json(cls, json_data: dict) -> RawBullet:
         """Creates a RawBullet from a JSON dictionary."""
-        print(json_data)
         return cls(**json_data)
 
 

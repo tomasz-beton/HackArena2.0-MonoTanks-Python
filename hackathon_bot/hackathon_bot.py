@@ -102,11 +102,22 @@ class HackathonBot(ABC):
 
     .. code-block:: python
 
-        async def next_move(self, game_state: GameState) -> ResponseAction:
+        def next_move(self, game_state: GameState) -> ResponseAction:
             response = Movement(MovementDirection.FORWARD)
             response = Rotation(RotationDirection.LEFT, None)
             response = AbilityUse(Ability.FIRE_BULLET)
             response = Pass()  # to skip the tick
+
+    You can also override additional methods:
+
+    .. code-block:: python
+
+        class MyBot(HackathonBot):
+
+            def on_game_starting(self) -> None:
+                print("The game is starting.")
+                print("We are ready to go!")
+                # See method documentation for more information
     """
 
     _lobby_data: LobbyDataModel
@@ -198,6 +209,38 @@ class HackathonBot(ABC):
             Only present for `Custom` warning type.
         """
 
+    def on_game_starting(self) -> None:
+        """Called when the game is starting.
+
+        This method can be overridden to perform any action while the game
+        is starting and the lobby data will no longer change.
+
+        While this method is running, the server waits for it to complete before
+        finishing the game start process. Therefore, it is recommended to keep
+        this method as short as possible.
+
+        By default, this method prints a message that the game is starting.
+
+        Examples
+        --------
+
+        .. code-block:: python
+
+            class MyBot(HackathonBot):
+
+                lobby_data: LobbyData
+
+                def on_lobby_data_received(self, lobby_data: LobbyData) -> None:
+                    self.lobby_data = lobby_data
+
+                def on_game_starting(self) -> None:
+                    print("The game is starting.")
+                    print(f"I have to defeat {len(self.lobby_data.players)-1} opponents.")
+                    print("I am ready to fight!")
+        """
+
+        print("The game is starting")
+
     @final
     async def _send_packet(
         self,
@@ -215,7 +258,8 @@ class HackathonBot(ABC):
     @final
     def _handle_ping_packet(self, websocket: WebSocket) -> None:
         asyncio.run_coroutine_threadsafe(
-            self._send_packet(websocket, PacketType.PONG), self._loop
+            self._send_packet(websocket, PacketType.PONG),
+            self._loop,
         )
 
     @final
@@ -245,6 +289,13 @@ class HackathonBot(ABC):
         payload = response_action.to_payload(game_state.id)
         asyncio.run_coroutine_threadsafe(
             self._send_packet(websocket, response_action.packet_type, payload),
+            self._loop,
+        )
+
+    @final
+    def _send_ready_to_receive_game_state(self, websocket: WebSocket) -> None:
+        asyncio.run_coroutine_threadsafe(
+            self._send_packet(websocket, PacketType.READY_TO_RECEIVE_GAME_STATE),
             self._loop,
         )
 
@@ -282,6 +333,21 @@ class HackathonBot(ABC):
             self.on_warning_received(WarningType(packet_type), message)
             return
 
+        if packet_type == PacketType.GAME_END:
+            payload = GameEndPayload.from_json(data["payload"])
+            game_result = GameResultModel.from_payload(payload)
+            self.on_game_ended(game_result)
+            return
+
+        if packet_type == PacketType.GAME_STARTED:
+            print("The game has started.")
+            return
+
+        if packet_type == PacketType.GAME_STARTING:
+            self.on_game_starting()
+            self._send_ready_to_receive_game_state(websocket)
+            return
+
         if packet_type == PacketType.CONNECTION_ACCEPTED:
             print("Connected to the server.")
             return
@@ -289,16 +355,6 @@ class HackathonBot(ABC):
         if packet_type == PacketType.CONNECTION_REJECTED:
             payload = ConnectionRejectedPayload.from_json(data["payload"])
             print(f"Connection rejected: {payload.reason}")
-            return
-
-        if packet_type == PacketType.GAME_START:
-            print("Game started.")
-            return
-
-        if packet_type == PacketType.GAME_END:
-            payload = GameEndPayload.from_json(data["payload"])
-            game_result = GameResultModel.from_payload(payload)
-            self.on_game_ended(game_result)
             return
 
     @final

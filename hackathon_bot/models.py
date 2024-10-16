@@ -115,16 +115,17 @@ class BulletModel:
     id: int
     speed: float
     direction: Direction
-    type: BulletType = BulletType.BASIC
+    type: BulletType
 
     @classmethod
     def from_raw(cls, raw: RawBullet) -> BulletModel:
         """Creates a bullet from a raw bullet payload."""
 
-        if raw.type == "doubleBullet":
+        if raw.type == "double":
             return DoubleBulletModel.from_raw(raw)
 
         dict_ = asdict(raw)
+        dict_["type"] = BulletType.BASIC
         return cls(**dict_)
 
 
@@ -223,6 +224,8 @@ class ZoneModel(ABC):  # pylint: disable=too-many-instance-attributes
             zone = BeingContestedZoneModel
         elif status == ZoneStatus.BEING_RETAKEN:
             zone = BeingRetakenZoneModel
+        else:
+            raise ValueError(f"Unknown zone status: {status}")
 
         return zone(**data)
 

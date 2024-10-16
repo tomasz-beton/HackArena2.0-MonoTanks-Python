@@ -244,12 +244,16 @@ class PacketType(IntEnum):
         Represents a lobby deleted packet.
     GAME_STATE_GROUP: :class:`int`
         Represents a 4-bit group for game state packets.
-    GAME_START: :class:`int`
-        Represents a game start packet.
+    GAME_STARTED: :class:`int`
+        Represents a game started packet.
     GAME_STATE: :class:`int`
         Represents a game state packet.
     GAME_END: :class:`int`
         Represents a game end packet.
+    GAME_STARTING: :class:`int`
+        Represents a game starting packet.
+    READY_TO_RECEIVE_GAME_STATE: :class:`int`
+        Represents a ready to receive game state packet.
     PLAYER_RESPONSE_ACTION_GROUP: :class:`int`
         Represents a 4-bit group for player response action packets.
     MOVEMENT: :class:`int`
@@ -296,9 +300,11 @@ class PacketType(IntEnum):
     LOBBY_DELETED = LOBBY_GROUP | 0x2
 
     GAME_STATE_GROUP = 0x30
-    GAME_START = GAME_STATE_GROUP | 0x1
+    GAME_STARTED = GAME_STATE_GROUP | 0x1
     GAME_STATE = GAME_STATE_GROUP | HAS_PAYLOAD | 0x2
     GAME_END = GAME_STATE_GROUP | HAS_PAYLOAD | 0x3
+    GAME_STARTING = GAME_STATE_GROUP | 0x4
+    READY_TO_RECEIVE_GAME_STATE = GAME_STATE_GROUP | 0x5
 
     PLAYER_RESPONSE_ACTION_GROUP = 0x40
     MOVEMENT = PLAYER_RESPONSE_ACTION_GROUP | HAS_PAYLOAD | 0x1

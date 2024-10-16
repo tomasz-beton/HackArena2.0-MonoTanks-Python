@@ -328,14 +328,27 @@ def test_handle_messages__connection_rejected() -> None:
         mock_print.assert_called_once_with("Connection rejected: test")
 
 
-def test_handle_messages__game_start() -> None:
+def test_handle_messages__game_started() -> None:
     """Test _handle_messages method with a game start packet."""
 
     bot = TestBot()
     ws = Mock()
 
     # Check if the method does not raise an exception
-    bot._handle_messages(ws, json.dumps({"type": PacketType.GAME_START}))
+    bot._handle_messages(ws, json.dumps({"type": PacketType.GAME_STARTED}))
+
+
+def test_handle_messages__game_starting() -> None:
+    """Test _handle_messages method with a game start packet."""
+
+    bot = TestBot()
+    ws = Mock()
+
+    with patch.object(
+        bot, "_send_ready_to_receive_game_state", new_callable=Mock
+    ) as mock_send_ready:
+        bot._handle_messages(ws, json.dumps({"type": PacketType.GAME_STARTING}))
+        mock_send_ready.assert_called_once_with(ws)
 
 
 def test_handle_messages__game_end(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -485,3 +498,19 @@ def test_handle_next_move_pass():
         mock_run_coroutine_threadsafe.assert_called_once()
         payload = Pass().to_payload(game_state.id)
         bot._send_packet.assert_called_once_with(ws, Pass().packet_type, payload)
+
+
+def test_send_ready_to_receive_game_state() -> None:
+    """Test _send_ready_to_receive_game_state method."""
+
+    ws = Mock()
+    bot = TestBot()
+    bot._send_packet = Mock()
+
+    with patch("asyncio.run_coroutine_threadsafe") as mock_run_coroutine_threadsafe:
+        bot._send_ready_to_receive_game_state(ws)
+
+        bot._send_packet.assert_called_once_with(
+            ws, PacketType.READY_TO_RECEIVE_GAME_STATE
+        )
+        mock_run_coroutine_threadsafe.assert_called_once()

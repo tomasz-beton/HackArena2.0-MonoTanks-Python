@@ -8,7 +8,10 @@ from hackathon_bot.payloads import (
     GameStatePayload,
     LobbyDataPayload,
     RawBullet,
+    RawItem,
+    RawLaser,
     RawMap,
+    RawMine,
     RawPlayer,
     RawTank,
     RawTileObject,
@@ -145,14 +148,71 @@ def test_RawTurret_from_json__player_is_not_agent():
     assert raw_turret.ticks_to_regen_bullet is None
 
 
-def test_RawBullet_from_json():
+def test_RawBullet_from_json__basic():
     """Test RawBullet.from_json method."""
 
-    raw_bullet = RawBullet.from_json({"id": 123, "speed": 2, "direction": 0})
+    raw_bullet = RawBullet.from_json(
+        {"id": 123, "speed": 2, "direction": 0, "type": "basic"}
+    )
 
     assert raw_bullet.id == 123
     assert raw_bullet.speed == 2
     assert raw_bullet.direction == 0
+    assert raw_bullet.type == "basic"
+
+
+def test_RawBullet_from_json__double():
+    """Test RawBullet.from_json method."""
+
+    raw_bullet = RawBullet.from_json(
+        {"id": 123, "speed": 2, "direction": 0, "type": "double"}
+    )
+
+    assert raw_bullet.id == 123
+    assert raw_bullet.speed == 2
+    assert raw_bullet.direction == 0
+    assert raw_bullet.type == "double"
+
+
+def test_RawLaser_from_json():
+    """Test RawLaser.from_json method."""
+
+    raw_laser = RawLaser.from_json({"id": 123, "orientation": 0})
+
+    assert raw_laser.id == 123
+    assert raw_laser.orientation == 0
+
+
+def test_RawMine_from_json__not_exploding():
+    """Test RawMine.from_json method.
+
+    The mine is not exploding.
+    """
+
+    raw_mine = RawMine.from_json({"id": 123, "explosion_remaining_ticks": None})
+
+    assert raw_mine.id == 123
+    assert raw_mine.explosion_remaining_ticks is None
+
+
+def test_RawMine_from_json__exploding():
+    """Test RawMine.from_json method.
+
+    The mine is exploding.
+    """
+
+    raw_mine = RawMine.from_json({"id": 123, "explosion_remaining_ticks": 10})
+
+    assert raw_mine.id == 123
+    assert raw_mine.explosion_remaining_ticks == 10
+
+
+def test_RawItem_from_json():
+    """Test RawItem.from_json method."""
+
+    raw_item = RawItem.from_json({"type": 1})
+
+    assert raw_item.type == 1
 
 
 def test_RawWall_from_json():
@@ -377,6 +437,7 @@ def test_RawTileObject_from_json__bullet():
                 "id": 123,
                 "speed": 2,
                 "direction": 0,
+                "type": "basic",
             },
         }
     )
