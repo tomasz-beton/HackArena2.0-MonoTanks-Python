@@ -28,6 +28,10 @@ from hackathon_bot.protocols import (
     BeingContestedZone,
     BeingRetakenZone,
     CapturedZone,
+    DoubleBullet,
+    Item,
+    Laser,
+    Mine,
     NeutralZone,
     PlayerTank,
 )
@@ -37,7 +41,11 @@ zone = models.ZoneModel(0, 0, 1, 1, 65, ZoneStatus.NEUTRAL)
 turret = models.TurretModel(Direction.LEFT)
 player_tank = models.TankModel("id", Direction.LEFT, turret)
 agent_tank = models.AgentTankModel("id", Direction.LEFT, turret)
-bullet = models.BulletModel(1, BulletType.BASIC, 1.0, Direction.LEFT)
+bullet = models.BulletModel(1, 1.0, Direction.LEFT, BulletType.BASIC)
+double_bullet = models.DoubleBulletModel(1, 1.0, Direction.LEFT, BulletType.DOUBLE)
+laser = models.LaserModel(1, Direction.LEFT)
+mine = models.MineModel(1, 1)
+item = models.ItemModel(1)
 
 
 @pytest.mark.parametrize(
@@ -47,6 +55,10 @@ bullet = models.BulletModel(1, BulletType.BASIC, 1.0, Direction.LEFT)
         (bullet, False),
         (player_tank, False),
         (agent_tank, False),
+        (double_bullet, False),
+        (laser, False),
+        (mine, False),
+        (item, False),
     ],
 )
 def test_tile_entity_isinstance_wall(entity, expected):
@@ -61,6 +73,10 @@ def test_tile_entity_isinstance_wall(entity, expected):
         (bullet, False),
         (player_tank, True),
         (agent_tank, True),
+        (double_bullet, False),
+        (laser, False),
+        (mine, False),
+        (item, False),
     ],
 )
 def test_tile_entity_isinstance_tank(entity, expected):
@@ -75,6 +91,10 @@ def test_tile_entity_isinstance_tank(entity, expected):
         (bullet, False),
         (player_tank, False),
         (agent_tank, True),
+        (double_bullet, False),
+        (laser, False),
+        (mine, False),
+        (item, False),
     ],
 )
 def test_tile_entity_isinstance_agent_tank(entity, expected):
@@ -89,11 +109,87 @@ def test_tile_entity_isinstance_agent_tank(entity, expected):
         (bullet, True),
         (player_tank, False),
         (agent_tank, False),
+        (double_bullet, True),
+        (laser, False),
+        (mine, False),
+        (item, False),
     ],
 )
 def test_tile_entity_isinstance_bullet(entity, expected):
     """Test if entity (Model) is instance of Bullet (Protocol)."""
     assert isinstance(entity, BulletModel) == expected
+
+
+@pytest.mark.parametrize(
+    "entity, expected",
+    [
+        (wall, False),
+        (bullet, False),
+        (player_tank, False),
+        (agent_tank, False),
+        (double_bullet, True),
+        (laser, False),
+        (mine, False),
+        (item, False),
+    ],
+)
+def test_tile_entity_isinstance_double_bullet(entity, expected):
+    """Test if entity (Model) is instance of Bullet (Protocol)."""
+    assert isinstance(entity, DoubleBullet) == expected
+
+
+@pytest.mark.parametrize(
+    "entity, expected",
+    [
+        (wall, False),
+        (bullet, False),
+        (player_tank, False),
+        (agent_tank, False),
+        (double_bullet, False),
+        (laser, True),
+        (mine, False),
+        (item, False),
+    ],
+)
+def test_tile_entity_isinstance_laser(entity, expected):
+    """Test if entity (Model) is instance of Bullet (Protocol)."""
+    assert isinstance(entity, Laser) == expected
+
+
+@pytest.mark.parametrize(
+    "entity, expected",
+    [
+        (wall, False),
+        (bullet, False),
+        (player_tank, False),
+        (agent_tank, False),
+        (double_bullet, False),
+        (laser, False),
+        (mine, True),
+        (item, False),
+    ],
+)
+def test_tile_entity_isinstance_mine(entity, expected):
+    """Test if entity (Model) is instance of Bullet (Protocol)."""
+    assert isinstance(entity, Mine) == expected
+
+
+@pytest.mark.parametrize(
+    "entity, expected",
+    [
+        (wall, False),
+        (bullet, False),
+        (player_tank, False),
+        (agent_tank, False),
+        (double_bullet, False),
+        (laser, False),
+        (mine, False),
+        (item, True),
+    ],
+)
+def test_tile_entity_isinstance_item(entity, expected):
+    """Test if entity (Model) is instance of Bullet (Protocol)."""
+    assert isinstance(entity, Item) == expected
 
 
 @pytest.mark.parametrize(
