@@ -120,7 +120,7 @@ class HackathonBot(ABC):
                 # See method documentation for more information
     """
 
-    _lobby_data: LobbyDataModel
+    _lobby_data: LobbyDataModel = None
     _is_processing: bool = False
     _loop: asyncio.AbstractEventLoop
 
@@ -135,6 +135,12 @@ class HackathonBot(ABC):
     @abstractmethod
     def on_lobby_data_received(self, lobby_data: LobbyData) -> None:
         """Called when the lobby data is received.
+
+        The lobby data is received after connecting to the server
+        or when the lobby data changes (for example, when a player joins or leaves).
+
+        If the server is in sandbox mode, the lobby data will be received
+        immediately after connecting to the server.
 
         Parameters
         ----------
@@ -221,6 +227,8 @@ class HackathonBot(ABC):
 
         By default, this method prints a message that the game is starting.
 
+        This method is not called when joining a game running in sandbox mode.
+
         Examples
         --------
 
@@ -300,7 +308,22 @@ class HackathonBot(ABC):
         )
 
     @final
-    def _handle_messages(  # pylint: disable=too-many-return-statements
+    def send_lobby_data_request(self, websocket: WebSocket) -> None:
+        """Sends a lobby data request to the server."""
+        asyncio.run_coroutine_threadsafe(
+            self._send_packet(websocket, PacketType.LOBBY_DATA_REQUEST),
+            self._loop,
+        )
+
+    @final
+    def _send_game_status_request(self, websocket: WebSocket) -> None:
+        asyncio.run_coroutine_threadsafe(
+            self._send_packet(websocket, PacketType.GAME_STATUS_REQUEST),
+            self._loop,
+        )
+
+    @final
+    def _handle_messages(  # pylint: disable=too-many-return-statements, too-many-branches
         self, websocket: WebSocket, message: websockets.Data
     ) -> None:
         data = humps.decamelize(json.loads(message))
@@ -343,7 +366,7 @@ class HackathonBot(ABC):
             self.on_warning_received(WarningType(packet_type), message)
             return
 
-        if packet_type == PacketType.GAME_END:
+        if packet_type == PacketType.GAME_ENDED:
             payload = GameEndPayload.from_json(data["payload"])
             game_result = GameResultModel.from_payload(payload)
             self.on_game_ended(game_result)
@@ -355,16 +378,24 @@ class HackathonBot(ABC):
 
         if packet_type == PacketType.GAME_STARTING:
             self.on_game_starting()
+            if self._lobby_data is None:
+                self.send_lobby_data_request(websocket)
             self._send_ready_to_receive_game_state(websocket)
             return
 
         if packet_type == PacketType.CONNECTION_ACCEPTED:
             print("Connected to the server.")
+            self._send_game_status_request(websocket)
             return
 
         if packet_type == PacketType.CONNECTION_REJECTED:
             payload = ConnectionRejectedPayload.from_json(data["payload"])
             print(f"Connection rejected: {payload.reason}")
+            return
+
+        if packet_type == PacketType.GAME_IN_PROGRESS:
+            self.send_lobby_data_request(websocket)
+            self._send_ready_to_receive_game_state(websocket)
             return
 
     @final

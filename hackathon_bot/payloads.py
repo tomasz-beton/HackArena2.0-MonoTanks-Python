@@ -11,6 +11,8 @@ from dataclasses import dataclass
 
 import humps
 
+# pylint: disable=too-many-instance-attributes
+
 
 @dataclass(slots=True, frozen=True)
 class ServerSettings:
@@ -19,13 +21,15 @@ class ServerSettings:
     grid_dimension: int
     number_of_players: int
     seed: int
-    ticks: int
+    ticks: int | None
     broadcast_interval: int
+    sandbox_mode: bool
     eager_broadcast: bool
+    match_name: str | None
 
 
 @dataclass(slots=True, frozen=True)
-class RawPlayer:  # pylint: disable=too-many-instance-attributes
+class RawPlayer:
     """Represents a raw player data."""
 
     id: str
@@ -195,7 +199,7 @@ class RawTurret:
 
 
 @dataclass(slots=True, frozen=True)
-class RawZone:  # pylint: disable=too-many-instance-attributes
+class RawZone:
     """Represents a raw zone data."""
 
     x: int

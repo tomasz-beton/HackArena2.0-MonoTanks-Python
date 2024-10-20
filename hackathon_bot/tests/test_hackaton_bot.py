@@ -342,6 +342,20 @@ def test_handle_messages__connection_accepted() -> None:
     bot._handle_messages(ws, json.dumps({"type": PacketType.CONNECTION_ACCEPTED}))
 
 
+def test_handle_messages__game_in_progress() -> None:
+    """Test _handle_messages method with a game status packet."""
+
+    bot = TestBot()
+    ws = Mock()
+    bot.send_lobby_data_request = Mock()
+    bot._send_ready_to_receive_game_state = Mock()
+
+    bot._handle_messages(ws, json.dumps({"type": PacketType.GAME_IN_PROGRESS}))
+
+    bot.send_lobby_data_request.assert_called_once_with(ws)
+    bot._send_ready_to_receive_game_state.assert_called_once_with(ws)
+
+
 def test_handle_messages__connection_rejected() -> None:
     """Test _handle_messages method with a connection rejected packet."""
 
@@ -370,20 +384,37 @@ def test_handle_messages__game_started() -> None:
     bot._handle_messages(ws, json.dumps({"type": PacketType.GAME_STARTED}))
 
 
-def test_handle_messages__game_starting() -> None:
-    """Test _handle_messages method with a game start packet."""
+def test_handle_messages__game_starting__lobby_data_set() -> None:
+    """Test _handle_messages method with a game starting packet."""
 
     bot = TestBot()
     ws = Mock()
+    bot._lobby_data = Mock()
+    bot.send_lobby_data_request = Mock()
+    bot._send_ready_to_receive_game_state = Mock()
 
-    with patch.object(
-        bot, "_send_ready_to_receive_game_state", new_callable=Mock
-    ) as mock_send_ready:
-        bot._handle_messages(ws, json.dumps({"type": PacketType.GAME_STARTING}))
-        mock_send_ready.assert_called_once_with(ws)
+    bot._handle_messages(ws, json.dumps({"type": PacketType.GAME_STARTING}))
+
+    bot.send_lobby_data_request.assert_not_called()
+    bot._send_ready_to_receive_game_state.assert_called_once_with(ws)
 
 
-def test_handle_messages__game_end(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_handle_messages__game_starting__lobby_data_not_set() -> None:
+    """Test _handle_messages method with a game starting packet."""
+
+    bot = TestBot()
+    ws = Mock()
+    bot._lobby_data = None
+    bot.send_lobby_data_request = Mock()
+    bot._send_ready_to_receive_game_state = Mock()
+
+    bot._handle_messages(ws, json.dumps({"type": PacketType.GAME_STARTING}))
+
+    bot.send_lobby_data_request.assert_called_once_with(ws)
+    bot._send_ready_to_receive_game_state.assert_called_once_with(ws)
+
+
+def test_handle_messages__game_ended(monkeypatch: pytest.MonkeyPatch) -> None:
     """Test _handle_messages method with a game end packet."""
     bot = TestBot()
     ws = Mock()
@@ -396,7 +427,7 @@ def test_handle_messages__game_end(monkeypatch: pytest.MonkeyPatch) -> None:
     # Check if the on_game_ended method was called with the game result
     with patch.object(bot, "on_game_ended", new_callable=Mock) as mock_handle_game_end:
         bot._handle_messages(
-            ws, json.dumps({"type": PacketType.GAME_END, "payload": {}})
+            ws, json.dumps({"type": PacketType.GAME_ENDED, "payload": {}})
         )
         mock_handle_game_end.assert_called_once_with(game_result)
 
@@ -545,4 +576,32 @@ def test_send_ready_to_receive_game_state() -> None:
         bot._send_packet.assert_called_once_with(
             ws, PacketType.READY_TO_RECEIVE_GAME_STATE
         )
+        mock_run_coroutine_threadsafe.assert_called_once()
+
+
+def test_send_lobby_data_request() -> None:
+    """Test _send_lobby_data_request method."""
+
+    ws = Mock()
+    bot = TestBot()
+    bot._send_packet = Mock()
+
+    with patch("asyncio.run_coroutine_threadsafe") as mock_run_coroutine_threadsafe:
+        bot.send_lobby_data_request(ws)
+
+        bot._send_packet.assert_called_once_with(ws, PacketType.LOBBY_DATA_REQUEST)
+        mock_run_coroutine_threadsafe.assert_called_once()
+
+
+def test_send_game_status_request() -> None:
+    """Test _send_ready_lobby_data_request method."""
+
+    ws = Mock()
+    bot = TestBot()
+    bot._send_packet = Mock()
+
+    with patch("asyncio.run_coroutine_threadsafe") as mock_run_coroutine_threadsafe:
+        bot._send_game_status_request(ws)
+
+        bot._send_packet.assert_called_once_with(ws, PacketType.GAME_STATUS_REQUEST)
         mock_run_coroutine_threadsafe.assert_called_once()

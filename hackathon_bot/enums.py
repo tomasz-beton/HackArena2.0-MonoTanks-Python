@@ -227,7 +227,7 @@ class PacketType(IntEnum):
     HAS_PAYLOAD: :class:`int`
         Represents a flag that indicates that the packet has a payload.
     COMMUNICATION_GROUP: :class:`int`
-        Represents a 4-bit group for communication packets.
+        Represents a group for communication packets.
     PING: :class:`int`
         Represents a ping packet.
     PONG: :class:`int`
@@ -237,25 +237,33 @@ class PacketType(IntEnum):
     CONNECTION_REJECTED: :class:`int`
         Represents a connection rejected packet.
     LOBBY_GROUP: :class:`int`
-        Represents a 4-bit group for lobby packets.
+        Represents a group for lobby packets.
     LOBBY_DATA: :class:`int`
         Represents a lobby data packet.
-    LOBBY_DELETED: :class:`int`
-        Represents a lobby deleted packet.
+    LOBBY_DATA_REQUEST: :class:`int`
+        Represents a lobby data request packet.
     GAME_STATE_GROUP: :class:`int`
-        Represents a 4-bit group for game state packets.
-    GAME_STARTED: :class:`int`
-        Represents a game started packet.
+        Represents a group for game state packets.
     GAME_STATE: :class:`int`
         Represents a game state packet.
-    GAME_END: :class:`int`
-        Represents a game end packet.
-    GAME_STARTING: :class:`int`
-        Represents a game starting packet.
     READY_TO_RECEIVE_GAME_STATE: :class:`int`
         Represents a ready to receive game state packet.
+    GAME_STATUS_GROUP: :class:`int`
+        Represents a group for game status packets.
+    GAME_NOT_STARTED: :class:`int`
+        Represents a game not started packet.
+    GAME_STARTING: :class:`int`
+        Represents a game starting packet.
+    GAME_STARTED: :class:`int`
+        Represents a game started packet.
+    GAME_IN_PROGRESS: :class:`int`
+        Represents a game in progress packet.
+    GAME_ENDED: :class:`int`
+        Represents a game ended packet.
+    GAME_STATUS_REQUEST: :class:`int`
+        Represents a game status request packet.
     PLAYER_RESPONSE_ACTION_GROUP: :class:`int`
-        Represents a 4-bit group for player response action packets.
+        Represents a group for player response action packets.
     MOVEMENT: :class:`int`
         Represents a movement response packet.
     ROTATION: :class:`int`
@@ -270,6 +278,8 @@ class PacketType(IntEnum):
         Represents a custom warning packet.
     PLAYER_ALREADY_MADE_ACTION_WARNING: :class:`int`
         Represents a player already made action warning packet.
+    ACTION_IGNORED_DUE_TO_DEAD_WARNING: :class:`int`
+        Represents an action ignored due to dead warning packet.
     SLOW_RESPONSE_WARNING: :class:`int`
         Represents a slow response warning packet.
     ERROR_GROUP: :class:`int`
@@ -297,13 +307,10 @@ class PacketType(IntEnum):
 
     LOBBY_GROUP = 0x20
     LOBBY_DATA = LOBBY_GROUP | HAS_PAYLOAD | 0x1
-    LOBBY_DELETED = LOBBY_GROUP | 0x2
+    LOBBY_DATA_REQUEST = LOBBY_GROUP | 0x2
 
     GAME_STATE_GROUP = 0x30
-    GAME_STARTED = GAME_STATE_GROUP | 0x1
     GAME_STATE = GAME_STATE_GROUP | HAS_PAYLOAD | 0x2
-    GAME_END = GAME_STATE_GROUP | HAS_PAYLOAD | 0x3
-    GAME_STARTING = GAME_STATE_GROUP | 0x4
     READY_TO_RECEIVE_GAME_STATE = GAME_STATE_GROUP | 0x5
 
     PLAYER_RESPONSE_ACTION_GROUP = 0x40
@@ -311,6 +318,14 @@ class PacketType(IntEnum):
     ROTATION = PLAYER_RESPONSE_ACTION_GROUP | HAS_PAYLOAD | 0x2
     ABILITY_USE = PLAYER_RESPONSE_ACTION_GROUP | HAS_PAYLOAD | 0x3
     PASS = PLAYER_RESPONSE_ACTION_GROUP | HAS_PAYLOAD | 0x7
+
+    GAME_STATUS_GROUP = 0x50
+    GAME_NOT_STARTED = GAME_STATUS_GROUP | 0x1
+    GAME_STARTING = GAME_STATUS_GROUP | 0x2
+    GAME_STARTED = GAME_STATUS_GROUP | 0x3
+    GAME_IN_PROGRESS = GAME_STATUS_GROUP | 0x4
+    GAME_ENDED = GAME_STATUS_GROUP | HAS_PAYLOAD | 0x5
+    GAME_STATUS_REQUEST = GAME_STATUS_GROUP | 0x7
 
     WARNING_GROUP = 0xE0
     CUSTOM_WARNING = WARNING_GROUP | HAS_PAYLOAD | 0x1

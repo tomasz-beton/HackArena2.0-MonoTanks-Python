@@ -570,7 +570,9 @@ def test_LobbyDataPayload():
             "seed": 42,
             "ticks": 1000,
             "broadcast_interval": 100,
+            "sandbox_mode": False,
             "eager_broadcast": True,
+            "match_name": None,
         },
     }
 
