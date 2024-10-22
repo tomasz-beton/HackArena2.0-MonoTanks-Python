@@ -62,7 +62,8 @@ class Movement(ResponseAction):
     Example
     -------
 
-    .. code-block:: python
+    ::
+
         movement = Movement(MovementDirection.FORWARD)
     """
 
@@ -81,7 +82,8 @@ class Rotation(ResponseAction):
     Example
     -------
 
-    .. code-block:: python
+    ::
+
         rotation = Rotation(RotationDirection.LEFT, RotationDirection.RIGHT)
     """
 
@@ -105,7 +107,8 @@ class AbilityUse(ResponseAction):
     Example
     -------
 
-    .. code-block:: python
+    ::
+
         # Fire bullet (basic attack)
         ability_use = AbilityUse(Ability.FIRE_BULLET)
 
@@ -113,10 +116,10 @@ class AbilityUse(ResponseAction):
         ability_use = AbilityUse(Ability.FIRE_DOUBLE_BULLET)
 
         # Use laser
-        ability_use = AbilityUse(Ability.LASER)
+        ability_use = AbilityUse(Ability.USE_LASER)
 
         # Use radar
-        ability_use = AbilityUse(Ability.RADAR)
+        ability_use = AbilityUse(Ability.USE_RADAR)
 
         # Drop mine
         ability_use = AbilityUse(Ability.DROP_MINE)
@@ -137,7 +140,8 @@ class Pass(ResponseAction):
     Example
     -------
 
-    .. code-block:: python
+    ::
+
         pass_ = Pass()
     """
 

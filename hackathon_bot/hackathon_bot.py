@@ -13,7 +13,7 @@ To run the hackathon bot, create a new class that inherits
 from the `HackathonBot` class and implement the required methods.
 Then, create an instance of the bot and run it using the `run` method.
 
-.. code-block:: python
+::
 
     class MyBot(HackathonBot):
 
@@ -75,7 +75,7 @@ class HackathonBot(ABC):
     from the `HackathonBot` class and implement the required methods.
     Then, create an instance of the bot and run it using the `run` method.
 
-    .. code-block:: python
+    ::
 
         class MyBot(HackathonBot):
 
@@ -100,7 +100,7 @@ class HackathonBot(ABC):
     The `next_move` method should return a response action.
     The response action can be a `Movement`, `Rotation`, `AbilityUse` or `Pass` action.
 
-    .. code-block:: python
+    ::
 
         def next_move(self, game_state: GameState) -> ResponseAction:
             response = Movement(MovementDirection.FORWARD)
@@ -110,7 +110,7 @@ class HackathonBot(ABC):
 
     You can also override additional methods:
 
-    .. code-block:: python
+    ::
 
         class MyBot(HackathonBot):
 
@@ -166,7 +166,7 @@ class HackathonBot(ABC):
         --------
         The response action can be a `Movement`, `Rotation`, `AbilityUse` or `Pass` action.
 
-        .. code-block:: python
+        ::
 
             class MyBot(HackathonBot):
 
@@ -232,7 +232,7 @@ class HackathonBot(ABC):
         Examples
         --------
 
-        .. code-block:: python
+        ::
 
             class MyBot(HackathonBot):
 
@@ -429,7 +429,7 @@ class HackathonBot(ABC):
         Examples
         --------
 
-        .. code-block:: python
+        ::
 
             class MyBot(HackathonBot):
                 # Your bot implementation here

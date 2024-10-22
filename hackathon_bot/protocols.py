@@ -607,7 +607,8 @@ class Zone(Protocol):
 
     1. Using the `isinstance` function.
 
-    .. code-block:: python
+    ::
+
         if isinstance(zone, NeutralZone):
             # The zone is a neutral zone.
         elif isinstance(zone, BeingCapturedZone):
@@ -617,7 +618,8 @@ class Zone(Protocol):
 
     2. Using the `status` attribute and casting the zone to the corresponding type.
 
-    .. code-block:: python
+    ::
+
         if zone.status is ZoneStatus.NEUTRAL:
             zone_neutral: NeutralZone = zone
         elif zone.status is ZoneStatus.BEING_CAPTURED:
@@ -866,7 +868,8 @@ class Tile(Protocol):
         To check the type of the entity in the tile,
         use the `isinstance` function.
 
-        .. code-block:: python
+        ::
+
             for entity in tile.entities:
                 if isinstance(entity, Wall):
                     # The entity is a wall.
@@ -885,7 +888,8 @@ class Tile(Protocol):
 
         If you have checked the type of the entity, you can easily access its attributes.
 
-        .. code-block:: python
+        ::
+
             for entity in tile.entities:
                 if isinstance(entity, Mine):
                     >>> entity.exploded
@@ -909,7 +913,7 @@ class Tile(Protocol):
 
         For example:
 
-        .. code-block:: python
+        ::
 
             tile: Tile
             # Assume the first entity is your agent's tank
@@ -922,7 +926,7 @@ class Tile(Protocol):
 
         To accurately distinguish between them, follow this pattern:
 
-        .. code-block:: python
+        ::
 
             if isinstance(entity_agent, AgentTank):
                 # The entity is your agent's tank.
