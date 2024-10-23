@@ -493,7 +493,7 @@ def test_LobbyData_from_payload():
                 color=4278190335,
             ),
         ],
-        ServerSettings(16, 2, 25319, 123, 100, False, True, None),
+        ServerSettings(16, 2, 25319, 123, 100, False, True, None, "v1.0.0"),
     )
 
     lobby_data = LobbyDataModel.from_payload(lobby_data_payload)

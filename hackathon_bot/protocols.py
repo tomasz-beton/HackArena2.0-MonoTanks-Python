@@ -77,6 +77,8 @@ class ServerSettings(Protocol):
         The broadcast interval in miliseconds.
     eager_broadcast: :class:`bool`
         Whether to eager broadcast is enabled.
+    version: :class:`str`
+        The version of the server.
     """
 
     @property
@@ -92,12 +94,14 @@ class ServerSettings(Protocol):
         """The seed of the game."""
 
     @property
-    def ticks(self) -> int:
+    def ticks(self) -> int | None:
         """The number of game ticks.
 
         For example, if the number of ticks is 2000,
         and the broadcast interval is 50 milliseconds,
         the game will last for 100 seconds (2000 / (1000 / 50))
+
+        If sandbox mode is enabled, this value is `None`.
         """
 
     @property
@@ -107,6 +111,10 @@ class ServerSettings(Protocol):
         The interval in milliseconds between
         each broadcast game state.
         """
+
+    @property
+    def sandbox(self) -> bool:
+        """Whether the game is in sandbox mode."""
 
     @property
     def eager_broadcast(self) -> bool:
@@ -123,6 +131,14 @@ class ServerSettings(Protocol):
 
         As a **participant of Hackathon**, you can **ignore this**.
         """
+
+    @property
+    def match_name(self) -> str | None:
+        """The name of the match."""
+
+    @property
+    def version(self) -> str:
+        """The version of the server."""
 
 
 class GameStatePlayer(Protocol):
@@ -398,7 +414,9 @@ class AgentTank(Protocol):
 
 @runtime_checkable
 class Wall(Protocol):
-    """Represents a wall in the game."""
+    """Represents a wall in the game.
+
+    The wall does not have any attributes."""
 
     __instancecheck_wall__: bool
 
@@ -576,7 +594,7 @@ class LobbyData(Protocol):
         Your unique identifier.
     players: Sequence[:class:`LobbyPlayer`]
         The sequence of players in the lobby.
-    server_settings: :class:`ServerSettings`
+    server_settings: :class:`payloads.ServerSettings`
         The server settings.
     """
 

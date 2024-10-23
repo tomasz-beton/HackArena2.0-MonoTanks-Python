@@ -573,6 +573,7 @@ def test_LobbyDataPayload():
             "sandbox_mode": False,
             "eager_broadcast": True,
             "match_name": None,
+            "version": "v1.0.0"
         },
     }
 

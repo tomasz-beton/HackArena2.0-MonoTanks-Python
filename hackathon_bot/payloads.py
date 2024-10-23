@@ -26,6 +26,7 @@ class ServerSettings:
     sandbox_mode: bool
     eager_broadcast: bool
     match_name: str | None
+    version: str
 
 
 @dataclass(slots=True, frozen=True)

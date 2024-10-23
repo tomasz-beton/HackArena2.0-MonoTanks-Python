@@ -198,7 +198,7 @@ class HackathonBot(ABC):
 
         Parameters
         ----------
-        game_result: :class:`GameResult
+        game_result: :class:`GameResult`
             The game result with the scores of the players.
         """
 

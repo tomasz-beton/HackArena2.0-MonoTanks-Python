@@ -1,17 +1,15 @@
 """
-Framework for creating a bot for Hackathon 2024
-----------------------------------------------
+MonoTanks API Wrapper
+---------------------
 
-This module provides a framework for creating a bot for Hackathon 2024.
-The main class is `HackathonBot`, which should be subclassed and implemented
-with the required methods.
+A wrapper for the HackArena 2.0 - MonoTanks game.
 """
 
-__title__ = "HackArena2024H2-Python"
-__author__ = "KN __init__"
-__copyright__ = "2024 KN __init__"
-__license__ = "MIT"
-__version__ = "0.1.0"
+__title__ = "HackArena2.0-MonoTanks-Python"
+__author__ = "KN init"
+__copyright__ = "2024 KN init"
+__license__ = "GPL-3.0"
+__version__ = "1.0.0-rc.1"
 
 from .actions import *
 from .enums import *
