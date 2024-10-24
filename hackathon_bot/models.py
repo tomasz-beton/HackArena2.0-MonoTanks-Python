@@ -68,6 +68,7 @@ class TurretModel:
     def from_raw(cls, raw: RawTurret) -> TurretModel:
         """Creates a turret from a raw turret payload."""
         data = asdict(raw)
+        data["direction"] = Direction(data["direction"])
         data["ticks_to_regenerate_bullet"] = data.pop("ticks_to_regen_bullet", None)
         return cls(**data)
 
@@ -88,7 +89,10 @@ class TankModel:
     def from_raw(cls, raw: RawTank) -> TankModel:
         """Creates a tank from a raw tank payload."""
         data = asdict(raw)
+        data["direction"] = Direction(data["direction"])
         data["turret"] = TurretModel.from_raw(raw.turret)
+        if raw.secondary_item is not None:
+            data["secondary_item"] = ItemType(data["secondary_item"])
         return cls(**data)
 
 
@@ -124,9 +128,10 @@ class BulletModel:
         if raw.type == "double":
             return DoubleBulletModel.from_raw(raw)
 
-        dict_ = asdict(raw)
-        dict_["type"] = BulletType.BASIC
-        return cls(**dict_)
+        data = asdict(raw)
+        data["direction"] = Direction(data["direction"])
+        data["type"] = BulletType.BASIC
+        return cls(**data)
 
 
 @dataclass(slots=True, frozen=True)
@@ -141,7 +146,9 @@ class LaserModel:
     @classmethod
     def from_raw(cls, raw: RawLaser) -> LaserModel:
         """Creates a laser from a raw laser payload."""
-        return cls(**asdict(raw))
+        data = asdict(raw)
+        data["orientation"] = Orientation(data["orientation"])
+        return cls(**data)
 
 
 @dataclass(slots=True, frozen=True)
@@ -153,9 +160,10 @@ class DoubleBulletModel(BulletModel):
     @classmethod
     def from_raw(cls, raw: RawBullet) -> DoubleBulletModel:
         """Creates a double bullet from a raw double bullet payload."""
-        dict_ = asdict(raw)
-        dict_["type"] = BulletType.DOUBLE
-        return cls(**dict_)
+        data = asdict(raw)
+        data["type"] = BulletType.DOUBLE
+        data["direction"] = Direction(data["direction"])
+        return cls(**data)
 
 
 @dataclass(slots=True, frozen=True)

@@ -248,6 +248,8 @@ class Agent(GameStatePlayer, Protocol):
         Your nickname.
     color: :class:`int`
         Your color in format `0xAABBGGRR`.
+    score: :class:`int`
+        Your score.
     ping: :class:`int`
         Your ping.
     ticks_to_regenerate: :class:`int` | `None`
