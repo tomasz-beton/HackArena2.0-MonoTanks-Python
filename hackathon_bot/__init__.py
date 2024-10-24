@@ -9,7 +9,7 @@ __title__ = "HackArena2.0-MonoTanks-Python"
 __author__ = "KN init"
 __copyright__ = "2024 KN init"
 __license__ = "GPL-3.0"
-__version__ = "1.0.0-rc.1"
+__version__ = "1.0.0-rc.2"
 
 from .actions import *
 from .enums import *
