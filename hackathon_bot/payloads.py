@@ -122,7 +122,7 @@ class RawBullet(RawTileEntity):
     id: int
     speed: int | None
     direction: int | None
-    type: str
+    type: int
 
     @classmethod
     def from_json(cls, json_data: dict) -> RawBullet:

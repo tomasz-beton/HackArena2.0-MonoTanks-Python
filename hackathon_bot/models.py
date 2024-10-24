@@ -36,7 +36,7 @@ if TYPE_CHECKING:
 
 
 @dataclass(slots=True, frozen=True)
-class PlayerModel:
+class PlayerModel:  # pylint: disable=too-many-instance-attributes
     """Represents a player model."""
 
     id: str
@@ -47,6 +47,11 @@ class PlayerModel:
     ping: int | None = None
     ticks_to_regenerate: int | None = None
     is_using_radar: bool | None = None
+
+    @property
+    def is_dead(self) -> bool:
+        """Whether the player is dead."""
+        return self.ticks_to_regenerate is not None
 
     @classmethod
     def from_raw(cls, raw: RawPlayer) -> PlayerModel:
@@ -125,7 +130,7 @@ class BulletModel:
     def from_raw(cls, raw: RawBullet) -> BulletModel:
         """Creates a bullet from a raw bullet payload."""
 
-        if raw.type == "double":
+        if raw.type == 1:  # Double
             return DoubleBulletModel.from_raw(raw)
 
         data = asdict(raw)
@@ -359,6 +364,7 @@ class MapModel:
 
                 tab.append(TileModel(objects, zone, is_visible))
             tiles.append(tuple(tab))
+        tiles = tuple(zip(*tiles))
 
         return MapModel(tuple(tiles), tuple(zones), raw.visibility)
 

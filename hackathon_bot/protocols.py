@@ -238,7 +238,7 @@ class GameEndPlayer(Protocol):
 
 
 class Agent(GameStatePlayer, Protocol):
-    """Represents your agent (bot) in the game.
+    """Represents your agent (player) in the game.
 
     Attributes
     ----------
@@ -282,6 +282,10 @@ class Agent(GameStatePlayer, Protocol):
 
         If `None`, you are not dead.
         """
+
+    @property
+    def is_dead(self) -> bool:
+        """Whether you are dead."""
 
     @property
     def is_using_radar(self) -> bool:
@@ -990,8 +994,8 @@ class Map(Protocol):
     ----------
     tiles: tuple[tuple[:class:`Tile`]]
         The tiles of the map in a 2D tuple,
-        where the first index is the x-coordinate
-        and the second index is the y-coordinate.
+        where the first index is the y-coordinate
+        and the second index is the x-coordinate.
     zones: Sequence[:class:`Zone`]
         The zones on the map.
     """
@@ -1000,8 +1004,8 @@ class Map(Protocol):
     def tiles(self) -> tuple[tuple[Tile]]:
         """The tiles of the map in a 2D tuple.
 
-        The first index is the x-coordinate
-        and the second index is the y-coordinate.
+        The first index is the y-coordinate
+        and the second index is the x-coordinate.
         """
 
     @property
