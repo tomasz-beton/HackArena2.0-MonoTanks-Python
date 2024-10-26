@@ -17,7 +17,7 @@ class TomaszMapWithHistory(TomaszMap):
         # walls don't change
         self.zones = new_map.zones
 
-        self.agent_position = new_map.agent_position
+        self.agent_position = new_map.agent
         self.visible = new_map.visible
         self.visible_arr = new_map.visible_arr
 
@@ -49,3 +49,18 @@ class TomaszMapWithHistory(TomaszMap):
 
                     if entity['type'] in ['bullet', 'laser', 'agent_tank', 'double_bullet']:
                         self.entities_grid[x, y] = []
+
+
+    def __repr__(self):
+        return (
+            "TomaszMapWithHistory<"
+            f"size={self.size},"
+            f"agent_position={self.agent.position},"
+            f"lasers={len(self.lasers)},"
+            f"bullets={len(self.bullets)},"
+            f"tanks={len(self.tanks)},"
+            f"mines={len(self.mines)},"
+            f"items={len(self.items)},"
+            f"zones={len(self.zones)},"
+            ">"
+        )

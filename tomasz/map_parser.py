@@ -1,7 +1,7 @@
 from hackathon_bot import *
 import json
 import numpy as np
-
+from typing import Tuple
 
 class TomaszZone:
     def __init__(self, game_zone):
@@ -25,11 +25,15 @@ class TomaszZone:
             'pos': self.pos
         }
     
+class TomaszAgent:
+    def __init__(self, entity: AgentTank, position: Tuple[int, int]):
+        self.entity = entity
+        self.position = position
 
 class TomaszMap:
-    def __init__(self, game_map):
+    def __init__(self, game_map: Map):
         self.size = (len(game_map.tiles), len(game_map.tiles[0]))
-        self.agent_position = None
+        self.agent = None
         self.initialized = False
 
 
@@ -48,7 +52,7 @@ class TomaszMap:
         for i in range(self.size[0]):
             for j in range(self.size[1]):
                 self.entities_grid[i, j] = []
-
+        
         self._extract_map_data(game_map)
 
     def iter_entities(self):
@@ -69,9 +73,9 @@ class TomaszMap:
         elif isinstance(entity, Bullet):
             entity_dict = {'type': 'bullet', 'pos': (x, y), 'dir': entity.direction}
             self.bullets.append(entity_dict)
-        elif isinstance(entity, AgentTank):
+        elif isinstance(entity, AgentTank,):
             entity_dict = {'type': 'agent_tank', 'pos': (x, y), 'dir': entity.direction, 'turret_dir': entity.turret.direction}
-            self.agent_position = (x, y)
+            self.agent = TomaszAgent(entity, (y, x))
             self.tanks.append(entity_dict)
         elif isinstance(entity, PlayerTank):
             entity_dict = {'type': 'player_tank', 'pos': (x, y), 'dir': entity.direction, 'turret_dir': entity.turret.direction}
@@ -92,7 +96,7 @@ class TomaszMap:
         self.entities_grid[x, y] = [entity_dict]
 
 
-    def _extract_map_data(self, game_map):
+    def _extract_map_data(self, game_map: Map):
         for zone in game_map.zones:
             idx = chr(zone.index)
             self.zones[idx] = TomaszZone(zone)
@@ -124,7 +128,7 @@ class TomaszMap:
             for y in range(self.entities_grid.shape[1]):
                 entities = self.entities_grid[x, y]
                 if len(entities) > 0:
-                    entity = entities[0]  # Pick the first entity for simplicity
+                    entity = entities[0]  # TODO !
                     entity_symbol = self._get_entity_symbol(entity)
                     char_map[x, y] = entity_symbol
                 elif self.visible_arr[x, y] == 1:
@@ -142,7 +146,7 @@ class TomaszMap:
         return (
             "TomaszMap<"
             f"size={self.size},"
-            f"agent_position={self.agent_position},"
+            f"agent_position={self.agent.position},"
             f"lasers={len(self.lasers)},"
             f"bullets={len(self.bullets)},"
             f"tanks={len(self.tanks)},"
@@ -152,7 +156,7 @@ class TomaszMap:
             ">"
         )
     
-    def _get_entity_symbol(self, entity_dict):
+    def _get_entity_symbol(self, entity_dict: dict):
         entity_type = entity_dict['type']
         
         if entity_type == 'wall':
@@ -188,7 +192,7 @@ class TomaszMap:
                 Direction.LEFT: "←"
             }.get(direction, "?")
 
-    def _item_symbol(self, item_type):
+    def _item_symbol(self, item_type: str):
         return {
             "item_double_bullet": "D",
             "item_laser": "L",
@@ -197,7 +201,6 @@ class TomaszMap:
         }.get(item_type, "?")
 
     def to_json(self) -> str:
-
     
         # Prepare data as dictionary for JSON serialization
         data = {
