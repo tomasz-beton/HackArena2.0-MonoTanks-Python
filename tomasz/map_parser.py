@@ -23,7 +23,7 @@ class TomaszMap:
     def _add_entity(self, entity, x, y):
         if isinstance(entity, Wall):
             self.walls.append((x, y))
-            self.walls_arr[y, x] = 1
+            self.walls_arr[x, y] = 1
         elif isinstance(entity, Laser):
             self.lasers.append({'type': 'laser', 'pos': (x, y), 'ori': entity.orientation})
         elif isinstance(entity, DoubleBullet):

@@ -59,7 +59,7 @@ class ExampleBot(HackathonBot):
     def _print_map(self, game_map: Map):
         #os.system("cls" if os.name == "nt" else "clear")
         map = TomaszMap(game_map)
-        # print(map)
+        print(map)
         map.pretty_print()
 
 
