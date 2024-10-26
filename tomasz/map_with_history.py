@@ -1,6 +1,8 @@
 from tomasz.map_parser import TomaszMap
 import numpy as np
 
+from tomasz.danger_map import get_danger, visualize_danger
+
 
 class TomaszMapWithHistory(TomaszMap):
     def __init__(self, *args, **kwargs):
@@ -64,3 +66,17 @@ class TomaszMapWithHistory(TomaszMap):
             f"zones={len(self.zones)},"
             ">"
         )
+    
+    def pretty_print(self):
+        danger_map = get_danger(self)
+        char_map = visualize_danger(danger_map)
+
+        og_char_map = self._char_map()
+
+        # stack horizontally
+        char_map = np.hstack((og_char_map, char_map))
+
+        char_map = np.pad(char_map, pad_width=1, mode='constant', constant_values="◻️")
+        map_string = "\n".join(" ".join(row) for row in char_map)
+        print(map_string, end="\n\n")
+
