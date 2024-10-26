@@ -52,7 +52,7 @@ def _is_walkable(map, neighbor):
     bool
         True if the neighbor is walkable.
     """
-    x, y = neighbor
+    y, x = neighbor
     if x < 0 or y < 0:
         return False
     if x >= map.size[0] or y >= map.size[1]:
@@ -82,7 +82,14 @@ def _reconstruct_path(came_from, current):
     while current in came_from:
         current = came_from[current]
         total_path.append(current)
-        return total_path[:-1][::-1]
+    return total_path[:-1][::-1]
+
+
+# Data class for the map, no methods
+# class TomaszMap:
+#     def __init__(self, game_map):
+#         self.walls_arr = np.zeros((len(game_map.tiles), len(game_map.tiles[0])), dtype=int)
+#         self.size = (len(game_map.tiles), len(game_map.tiles[0]))
 
 
 def a_star(map: TomaszMap, start: (int, int), goal: (int, int), heuristic=euclidean_distance):
@@ -92,7 +99,7 @@ def a_star(map: TomaszMap, start: (int, int), goal: (int, int), heuristic=euclid
     Parameters
     ----------
     map: TomaszMap
-        Parsed map.
+        Parsed map. Containing the occupancy grid (walls_arr). Rows[Columns]
     start: (int, int)
         The starting point, (x, y).
     goal: (int, int)
@@ -102,12 +109,12 @@ def a_star(map: TomaszMap, start: (int, int), goal: (int, int), heuristic=euclid
 
     Returns
     -------
-    list
+    List
         List of points to reach the goal.
     """
     movements = _get_movements_4n()
 
-    # The set of nodes already evaluated
+    # The set of nodes already evaluated.
     closed_set = set()
 
     # The set of currently discovered nodes that are not evaluated yet.
@@ -115,15 +122,17 @@ def a_star(map: TomaszMap, start: (int, int), goal: (int, int), heuristic=euclid
     open_set = {start}
 
     # For each node, which node it can most efficiently be reached from.
-    # If a node can be reached from many nodes, came_from will eventually contain the most efficient previous step.
+    # If a node can be reached from many nodes, came_from will eventually contain the
+    # most efficient previous step.
     came_from = {}
 
     # For each node, the cost of getting from the start node to that node.
-    g_score = {start: 0}
+    g_score = {start: 0.0}
 
+    # The cost of going from start to start is zero.
     # For each node, the total cost of getting from the start node to the goal
     # by passing by that node. That value is partly known, partly heuristic.
-    f_score = {start: g_score[start] + heuristic(start, goal)}
+    f_score = {start: heuristic(start, goal)}
 
     while open_set:
         # Get the node in open_set having the lowest f_score[] value
@@ -135,28 +144,22 @@ def a_star(map: TomaszMap, start: (int, int), goal: (int, int), heuristic=euclid
         open_set.remove(current)
         closed_set.add(current)
 
-        for dx, dy, cost in movements:
-            neighbor = (current[0] + dx, current[1] + dy)
+        for dx, dy, _ in movements:
+            neighbor = current[0] + dx, current[1] + dy
 
-            # Ignore the neighbor which is not walkable
             if not _is_walkable(map, neighbor):
                 continue
 
-            # Ignore the neighbor which is already evaluated
-            if neighbor in closed_set:
-                continue
-
             # The distance from start to a neighbor
-            tentative_g_score = g_score[current] + cost
+            tentative_g_score = g_score[current] + 1
 
-            if neighbor not in open_set:
-                open_set.add(neighbor)
-            elif tentative_g_score >= g_score[neighbor]:
+            if neighbor in closed_set and tentative_g_score >= g_score.get(neighbor, 0):
                 continue
 
-            # This path is the best until now. Record it!
-            came_from[neighbor] = current
-            g_score[neighbor] = tentative_g_score
-            f_score[neighbor] = g_score[neighbor] + heuristic(neighbor, goal)
+            if neighbor not in open_set or tentative_g_score < g_score.get(neighbor, 0):
+                came_from[neighbor] = current
+                g_score[neighbor] = tentative_g_score
+                f_score[neighbor] = g_score[neighbor] + heuristic(neighbor, goal)
+                open_set.add(neighbor)
 
-    raise ValueError("Failed to find path")
+    return []

@@ -2,6 +2,12 @@ from hackathon_bot import *
 import json
 import numpy as np
 
+class AgentMeta:
+    def __init__(self, entity: AgentTank, position: (int, int)):
+        self.entity = entity
+        self.position = position
+
+
 class TomaszMap:
     def __init__(self, game_map):
         self.walls = []
@@ -16,7 +22,7 @@ class TomaszMap:
         self.zones = {}
 
         self.size = (len(game_map.tiles), len(game_map.tiles[0]))
-        self.agent_position = None
+        self.agent = None
         
         self._extract_map_data(game_map)
 
@@ -31,7 +37,7 @@ class TomaszMap:
         elif isinstance(entity, Bullet):
             self.bullets.append({'type': 'bullet', 'pos': (x, y), 'dir': entity.direction})
         elif isinstance(entity, AgentTank):
-            self.agent_position = (x, y)
+            self.agent = AgentMeta(entity, (y, x))
             self.tanks.append({'type': 'agent_tank', 'pos': (x, y), "dir": entity.direction, "turret_dir": entity.turret.direction})
         elif isinstance(entity, PlayerTank):
             self.tanks.append({'type': 'player_tank', 'pos': (x, y), "dir": entity.direction, "turret_dir": entity.turret.direction})
