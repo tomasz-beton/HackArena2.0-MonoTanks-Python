@@ -1,5 +1,6 @@
 from hackathon_bot import Movement, Rotation, MovementDirection, Direction, RotationDirection
-from tomasz.map_parser import AgentMeta
+from tomasz.map_parser import TomaszAgent
+from typing import Tuple
 
 
 def get_move_delta(current, next):
@@ -109,7 +110,7 @@ def _get_needed_rotation(move_delta, current_direction) -> RotationDirection:
             return RotationDirection.RIGHT
 
 
-def get_movement_action(agent: AgentMeta, next_pos: (int, int), allow_backwards=False) -> Movement | Rotation:
+def get_movement_action(agent: TomaszAgent, next_pos: Tuple[int, int], allow_backwards=False) -> Movement | Rotation:
     """
     Get the movement action to move the agent to the next position.
 
@@ -117,7 +118,7 @@ def get_movement_action(agent: AgentMeta, next_pos: (int, int), allow_backwards=
     ----------
     allow_backwards: bool
         Whether to allow moving backwards
-    agent: AgentMeta
+    agent: TomaszAgent
         The agent.
     next_pos: (int, int)
         The next position.
