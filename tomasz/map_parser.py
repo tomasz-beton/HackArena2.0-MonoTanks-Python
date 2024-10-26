@@ -19,6 +19,8 @@ class TomaszMap:
         self.mines = []
         self.items = []
         self.zones = []
+        self.size = (len(game_map.tiles), len(game_map.tiles[0]))
+        self.agent_position = None
         
         self._extract_map_data(game_map)
 
@@ -59,6 +61,7 @@ class TomaszMap:
                 
                 # Tanks (AgentTank or PlayerTank)
                 elif isinstance(entity, AgentTank):
+                    self.agent_position = (x, y)
                     self.tanks.append({
                         'type': 'agent_tank',
                         'position': (x, y)
