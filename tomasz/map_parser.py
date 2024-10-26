@@ -2,12 +2,41 @@ from hackathon_bot import *
 import json
 import numpy as np
 
+
+class TomaszZone:
+    def __init__(self, game_zone):
+        self.index = game_zone.index
+        self.pos = game_zone.x, game_zone.y
+        self.width = game_zone.width
+        self.height = game_zone.height
+        self.status = game_zone.status
+        self.pos = []
+
+    def add_pos(self, x, y):
+        self.pos.append((x, y))
+
+    def to_dict(self):
+        return {
+            'idx': self.index,
+            'pos': self.pos,
+            'width': self.width,
+            'height': self.height,
+            'status': self.status,
+            'pos': self.pos
+        }
+    
+
 class TomaszMap:
     def __init__(self, game_map):
+        self.size = (len(game_map.tiles), len(game_map.tiles[0]))
+        self.agent_position = None
+        self.initialized = False
+
+
+        self.walls_arr = np.zeros(self.size, dtype=int)
+        self.visible_arr = np.zeros(self.size, dtype=int)
         self.walls = []
         self.visible = []
-        self.walls_arr = np.zeros((len(game_map.tiles), len(game_map.tiles[0])), dtype=int)
-        self.visible_arr = np.zeros((len(game_map.tiles), len(game_map.tiles[0])), dtype=int)
         self.lasers = []
         self.bullets = []
         self.tanks = []
@@ -15,64 +44,99 @@ class TomaszMap:
         self.items = []
         self.zones = {}
 
-        self.size = (len(game_map.tiles), len(game_map.tiles[0]))
-        self.agent_position = None
-        
+        self.entities_grid = np.zeros(self.size, dtype=object)
+        for i in range(self.size[0]):
+            for j in range(self.size[1]):
+                self.entities_grid[i, j] = []
+
         self._extract_map_data(game_map)
+
+    def iter_entities(self):
+        for ent in [*self.lasers, *self.bullets, *self.tanks, *self.mines, *self.items]:
+            yield ent
 
     def _add_entity(self, entity, x, y):
         if isinstance(entity, Wall):
-            self.walls.append((x, y))
+            entity_dict = {'type': 'wall', 'pos': (x, y)}
+            self.walls.append(entity_dict)
             self.walls_arr[x, y] = 1
         elif isinstance(entity, Laser):
-            self.lasers.append({'type': 'laser', 'pos': (x, y), 'ori': entity.orientation})
+            entity_dict = {'type': 'laser', 'pos': (x, y), 'ori': entity.orientation}
+            self.lasers.append(entity_dict)
         elif isinstance(entity, DoubleBullet):
-            self.bullets.append({'type': 'double_bullet', 'pos': (x, y), 'dir': entity.direction})
+            entity_dict = {'type': 'double_bullet', 'pos': (x, y), 'dir': entity.direction}
+            self.bullets.append(entity_dict)
         elif isinstance(entity, Bullet):
-            self.bullets.append({'type': 'bullet', 'pos': (x, y), 'dir': entity.direction})
+            entity_dict = {'type': 'bullet', 'pos': (x, y), 'dir': entity.direction}
+            self.bullets.append(entity_dict)
         elif isinstance(entity, AgentTank):
+            entity_dict = {'type': 'agent_tank', 'pos': (x, y), 'dir': entity.direction, 'turret_dir': entity.turret.direction}
             self.agent_position = (x, y)
-            self.tanks.append({'type': 'agent_tank', 'pos': (x, y), "dir": entity.direction, "turret_dir": entity.turret.direction})
+            self.tanks.append(entity_dict)
         elif isinstance(entity, PlayerTank):
-            self.tanks.append({'type': 'player_tank', 'pos': (x, y), "dir": entity.direction, "turret_dir": entity.turret.direction})
+            entity_dict = {'type': 'player_tank', 'pos': (x, y), 'dir': entity.direction, 'turret_dir': entity.turret.direction}
+            self.tanks.append(entity_dict)
         elif isinstance(entity, Mine):
-            self.mines.append({'type': 'mine', 'pos': (x, y), 'exploded': entity.exploded})
+            entity_dict = {'type': 'mine', 'pos': (x, y), 'exploded': entity.exploded}
+            self.mines.append(entity_dict)
         elif isinstance(entity, Item):
-            self.items.append({'type': entity.type, 'pos': (x, y)})
+            item_type = {
+                SecondaryItemType.DOUBLE_BULLET: 'item_double_bullet',
+                SecondaryItemType.LASER: 'item_laser',
+                SecondaryItemType.MINE: 'item_mine',
+                SecondaryItemType.RADAR: 'item_radar'
+            }.get(entity.type, "item_unknown")
+            entity_dict = {'type': item_type, 'pos': (x, y)}
+            self.items.append(entity_dict)
+        
+        self.entities_grid[x, y] = [entity_dict]
 
-    def _add_zone(self, zone, x, y, is_visible):
-        idx = chr(zone.index)
-        if idx not in self.zones:
-            self.zones[idx] = {'idx': idx, 'pos': [(x, y)], 'vis_mask': [is_visible],'upper_left':  (x, y), 'lower_right':  (x, y)}
-
-        self.zones[idx]["pos"].append((x, y))
-        self.zones[idx]["vis_mask"].append(is_visible)
-        self.zones[idx]["upper_left"] = (min(self.zones[idx]["upper_left"][0], x), min(self.zones[idx]["upper_left"][1], y))
-        self.zones[idx]["lower_right"] = (max(self.zones[idx]["lower_right"][0], x), max(self.zones[idx]["lower_right"][1], y))
 
     def _extract_map_data(self, game_map):
+        for zone in game_map.zones:
+            idx = chr(zone.index)
+            self.zones[idx] = TomaszZone(zone)
+
         for x, row in enumerate(game_map.tiles):
             for y, tile in enumerate(row):
+                if tile.zone:
+                    zone = self.zones[chr(tile.zone.index)]
+                    zone.add_pos(x, y)
+
                 if tile.is_visible:
                     self.visible.append((x, y))
                     self.visible_arr[x, y] = 1
 
-                if tile.zone:
-                    self._add_zone(tile.zone, x, y, is_visible=tile.is_visible)
-
                 for entity in tile.entities:
                     self._add_entity(entity, x, y)
 
+        self.initialized = True
+
+    def _char_map(self):
+        char_map = np.full(self.entities_grid.shape, " ", dtype=str)
+        for idx, zone in self.zones.items():
+            for x, y in zone.pos:
+                char_map[x, y] = idx.lower()
+        
+        char_map = np.where(self.walls_arr == 1, "■", char_map)
+
+        for x in range(self.entities_grid.shape[0]):
+            for y in range(self.entities_grid.shape[1]):
+                entities = self.entities_grid[x, y]
+                if len(entities) > 0:
+                    entity = entities[0]  # Pick the first entity for simplicity
+                    entity_symbol = self._get_entity_symbol(entity)
+                    char_map[x, y] = entity_symbol
+                elif self.visible_arr[x, y] == 1:
+                    char_map[x, y] = "⬞"
+
+        return char_map
+
     def pretty_print(self):
-        end = " "
-        for x, row in enumerate(self.walls_arr):
-            for y, wall in enumerate(row):
-                if wall == 1:
-                    print("■", end=end)
-                else:
-                    entity_symbol = self._get_entity_symbol(x, y)
-                    print(entity_symbol, end=end)
-            print()
+        char_map = self._char_map()
+        char_map = np.pad(char_map, pad_width=1, mode='constant', constant_values="◻️")
+        map_string = "\n".join(" ".join(row) for row in char_map)
+        print(map_string, end="\n\n")
 
     def __repr__(self):
         return (
@@ -88,42 +152,25 @@ class TomaszMap:
             ">"
         )
     
-    def _get_entity_symbol(self, x, y):
-        for laser in self.lasers:
-            if laser['pos'] == (x, y):
-                return "|" if laser['orientation'] is Orientation.HORIZONTAL else "-"
-
-        for bullet in self.bullets:
-            if bullet['pos'] == (x, y):
-                return self._bullet_direction_symbol(bullet['dir'], bullet['type'] == 'double_bullet')
-
-        for tank in self.tanks:
-            if tank['pos'] == (x, y):
-                return "A" if tank['type'] == 'agent_tank' else "P"
-
-        for mine in self.mines:
-            if mine['pos'] == (x, y):
-                return "x" if mine['exploded'] else "X"
-
-        for item in self.items:
-            if item['pos'] == (x, y):
-                return self._item_symbol(item['type'])
-
-        for zone in self.zones.values():
-            if (x, y) in zone['pos']:
-                if zone['vis_mask'][zone['pos'].index((x, y))]:
-                    return zone["idx"].upper()
-                else:
-                    return zone["idx"].lower()
+    def _get_entity_symbol(self, entity_dict):
+        entity_type = entity_dict['type']
         
-        if x < 0 or y < 0 or x >= self.visible_arr.shape[0] or y >= self.visible_arr.shape[1]:
-            print(f"Out of bounds: {x}, {y}")
-            return "⛝"
-        
-        if self.visible_arr[x, y] == 1:
-            return "⬞"
+        if entity_type == 'wall':
+            return "■"
+        elif entity_type == 'laser':
+            return "|" if entity_dict['ori'] is Orientation.HORIZONTAL else "-"
+        elif entity_type == 'double_bullet' or entity_type == 'bullet':
+            return self._bullet_direction_symbol(entity_dict['dir'], entity_type == 'double_bullet')
+        elif entity_type == 'agent_tank':
+            return "✪"
+        elif entity_type == 'player_tank':
+            return "◯"
+        elif entity_type == 'mine':
+            return "x" if entity_dict['exploded'] else "X"
+        elif entity_type in ["item_double_bullet", "item_laser", "item_mine", "item_radar"]:
+            return self._item_symbol(entity_type)
 
-        return " "  # Default symbol for empty tiles
+        return "?"
 
     def _bullet_direction_symbol(self, direction, is_double):
         if is_double:
@@ -143,13 +190,15 @@ class TomaszMap:
 
     def _item_symbol(self, item_type):
         return {
-            SecondaryItemType.DOUBLE_BULLET: "D",
-            SecondaryItemType.LASER: "L",
-            SecondaryItemType.MINE: "M",
-            SecondaryItemType.RADAR: "R"
+            "item_double_bullet": "D",
+            "item_laser": "L",
+            "item_mine": "M",
+            "item_radar": "R"
         }.get(item_type, "?")
 
     def to_json(self) -> str:
+
+    
         # Prepare data as dictionary for JSON serialization
         data = {
             'walls': self.walls,  # Convert NumPy array to list for JSON serialization
@@ -162,3 +211,4 @@ class TomaszMap:
             'zones': self.zones
         }
         return json.dumps(data)
+    

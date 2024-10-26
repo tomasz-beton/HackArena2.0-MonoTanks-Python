@@ -8,16 +8,29 @@ import os
 import random
 
 from hackathon_bot import *
-from tomasz. map_parser import TomaszMap
+from tomasz.map_parser import TomaszMap
+from tomasz.map_with_history import TomaszMapWithHistory
+import time
 
 
 class ExampleBot(HackathonBot):
+    map = None
 
     def on_lobby_data_received(self, lobby_data: LobbyData) -> None:
         print(f"Lobby data received: {lobby_data}")
 
     def next_move(self, game_state: GameState) -> ResponseAction:
-        self._print_map(game_state.map)
+        t1 = time.perf_counter()
+        if self.map is None:
+            self.map = TomaszMapWithHistory(game_state.map)
+        else:
+            new_map = TomaszMap(game_state.map)
+            self.map.update(new_map)
+        t2 = time.perf_counter()
+        print(f"Time to update map: {1e3*(t2 - t1):.2f} ms")
+
+        print(self.map)
+        self.map.pretty_print()
 
         # Check if the agent is dead
         if game_state.my_agent.is_dead:
@@ -55,14 +68,6 @@ class ExampleBot(HackathonBot):
                 Pass(),
             ]
         )
-
-    def _print_map(self, game_map: Map):
-        #os.system("cls" if os.name == "nt" else "clear")
-        map = TomaszMap(game_map)
-        print(map)
-        map.pretty_print()
-
-
 
 if __name__ == "__main__":
     bot = ExampleBot()
