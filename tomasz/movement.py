@@ -139,12 +139,6 @@ def get_movement_action(agent: TomaszAgent, next_pos: Tuple[int, int], allow_bac
 
     return Rotation(_get_needed_rotation(move_delta, agent.entity.direction), None)
 
-
-# Movement system
-# this class is supposed to allow:
-# - get_action
-# - is_target_reached
-# - update_map
 class MovementSystem:
     path: list = []
     target: (int, int) = None
@@ -201,3 +195,9 @@ class MovementSystem:
             if self.logging:
                 print("Moving from", tomasz_agent.position, "to", self._next_position, "with", movement_action)
             return movement_action
+
+    def update_map(self, tomasz_map: TomaszMap):
+        self.tomasz_map = tomasz_map
+        if self.target:
+            self.path = a_star(self.tomasz_map, self.tomasz_map.agent.position, self.target)
+            self.target_reached = False
