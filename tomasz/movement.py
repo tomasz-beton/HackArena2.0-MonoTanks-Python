@@ -1,6 +1,7 @@
 from hackathon_bot import Movement, Rotation, MovementDirection, Direction, RotationDirection
-from tomasz.map_parser import TomaszAgent
+from tomasz.map_parser import TomaszAgent, TomaszMap
 from typing import Tuple
+from tomasz.a_star import a_star
 
 
 def get_move_delta(current, next):
@@ -137,3 +138,66 @@ def get_movement_action(agent: TomaszAgent, next_pos: Tuple[int, int], allow_bac
         return Movement(MovementDirection.BACKWARD)
 
     return Rotation(_get_needed_rotation(move_delta, agent.entity.direction), None)
+
+
+# Movement system
+# this class is supposed to allow:
+# - get_action
+# - is_target_reached
+# - update_map
+class MovementSystem:
+    path: list = []
+    target: (int, int) = None
+    tomasz_map: TomaszMap = None
+    target_reached: bool = False
+    _next_position: (int, int) = None
+    logging: bool = False
+
+    def __init__(self, tomasz_map: TomaszMap, logging: bool = False):
+        self.tomasz_map = tomasz_map
+        self.logging = logging
+
+    def get_action(self, tomasz_agent: TomaszAgent) -> Movement | Rotation | None:
+        if not self.target:
+            if self.logging:
+                print("No target!")
+            return None
+
+        if not self.path:
+            if self.logging:
+                print("Looking for path from", tomasz_agent.position, "to", self.target)
+            self.path = a_star(self.tomasz_map, tomasz_agent.position, self.target)
+            if not self.path:
+                if self.logging:
+                    print("Failed to find path :(")
+                self.target_reached = False
+                self.target = None
+                return None
+            else:
+                self.target_reached = False
+                if self.logging:
+                    print("I have a path now! " + str(self.path))
+
+        if self.path:
+            if self.target == tomasz_agent.position:
+                if self.logging:
+                    print("Target reached :D")
+                self.target_reached = True
+                self.target = None
+                self.path = []
+                return None
+
+            if tomasz_agent.position == self._next_position:
+                if self.logging:
+                    print("I reached the next position!")
+                self._next_position = None
+
+            if not self._next_position:
+                if self.logging:
+                    print("Setting next position")
+                self._next_position = self.path.pop(0)
+
+            movement_action = get_movement_action(tomasz_agent, self._next_position)
+            if self.logging:
+                print("Moving from", tomasz_agent.position, "to", self._next_position, "with", movement_action)
+            return movement_action
