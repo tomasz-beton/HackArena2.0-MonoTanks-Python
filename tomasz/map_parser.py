@@ -14,6 +14,9 @@ class TomaszMap:
         self.mines = []
         self.items = []
         self.zones = {}
+
+        self.size = (len(game_map.tiles), len(game_map.tiles[0]))
+        self.agent_position = None
         
         self._extract_map_data(game_map)
 
@@ -28,9 +31,10 @@ class TomaszMap:
         elif isinstance(entity, Bullet):
             self.bullets.append({'type': 'bullet', 'pos': (x, y), 'dir': entity.direction})
         elif isinstance(entity, AgentTank):
-            self.tanks.append({'type': 'agent_tank', 'pos': (x, y)})
+            self.agent_position = (x, y)
+            self.tanks.append({'type': 'agent_tank', 'pos': (x, y), "dir": entity.direction, "turret_dir": entity.turret.direction})
         elif isinstance(entity, PlayerTank):
-            self.tanks.append({'type': 'player_tank', 'pos': (x, y)})
+            self.tanks.append({'type': 'player_tank', 'pos': (x, y), "dir": entity.direction, "turret_dir": entity.turret.direction})
         elif isinstance(entity, Mine):
             self.mines.append({'type': 'mine', 'pos': (x, y), 'exploded': entity.exploded})
         elif isinstance(entity, Item):
@@ -72,9 +76,16 @@ class TomaszMap:
 
     def __repr__(self):
         return (
-            f"TomaszMap<walls={len(self.walls)},lasers={len(self.lasers)},"
-            f"bullets={len(self.bullets)},tanks={len(self.tanks)},"
-            f"mines={len(self.mines)},items={len(self.items)},zones={len(self.zones)}>"
+            "TomaszMap<"
+            f"size={self.size},"
+            f"agent_position={self.agent_position},"
+            f"lasers={len(self.lasers)},"
+            f"bullets={len(self.bullets)},"
+            f"tanks={len(self.tanks)},"
+            f"mines={len(self.mines)},"
+            f"items={len(self.items)},"
+            f"zones={len(self.zones)},"
+            ">"
         )
     
     def _get_entity_symbol(self, x, y):
