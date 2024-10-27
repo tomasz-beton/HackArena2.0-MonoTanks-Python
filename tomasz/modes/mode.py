@@ -21,7 +21,7 @@ class Mode:
         """
         pass
 
-    def get_action(self, tomasz_map: TomaszMapWithHistory, my_bot: MyBot) -> ResponseAction:
+    def get_action(self, tomasz_map: TomaszMapWithHistory, my_bot: MyBot) -> ResponseAction | None:
         """
         Returns the action to be performed by the bot.
         Parameters
