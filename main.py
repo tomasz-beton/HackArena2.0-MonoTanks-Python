@@ -71,12 +71,14 @@ class MyBot(HackathonBot):
     def _get_best_mode(self):
         best_mode = self.modes[0]
         best_priority = 0
-        log.info(f"modes: {str(self.modes)}")
+        log.info(f"Picking best mode from: {str(self.modes)}")
         for mode in self.modes:
             priority = mode.get_priority(self.map, self)
+            log.info(f"mode: {mode} has priority: {priority}")
             if priority > best_priority:
                 best_mode = mode
                 best_priority = priority
+        log.info(f"Best mode: {best_mode}")
         return best_mode
 
 
