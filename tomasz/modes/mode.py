@@ -1,10 +1,9 @@
 from hackathon_bot import ResponseAction
+from tomasz.BotWithSystems import BotWithSystems
 from tomasz.map import TomaszMapWithHistory
-from main import MyBot
-
 
 class Mode:
-    def get_priority(self, tomasz_map: TomaszMapWithHistory, my_bot: MyBot) -> float:
+    def get_priority(self, tomasz_map: TomaszMapWithHistory, my_bot: BotWithSystems) -> float:
         """
         Returns the priority of the mode. The mode with the highest priority will be chosen.
         Parameters
@@ -21,7 +20,7 @@ class Mode:
         """
         pass
 
-    def get_action(self, tomasz_map: TomaszMapWithHistory, my_bot: MyBot) -> ResponseAction | None:
+    def get_action(self, tomasz_map: TomaszMapWithHistory, my_bot: BotWithSystems) -> ResponseAction | None:
         """
         Returns the action to be performed by the bot.
         Parameters

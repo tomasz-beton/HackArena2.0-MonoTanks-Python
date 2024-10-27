@@ -88,7 +88,7 @@ class PickUpItemMode(Mode):
     def get_action(self, tomasz_map, my_bot):
         if self.best_item and my_bot.movement:
             log.info(f"Moving to item: {self.best_item['type']}, at: {self.best_item['pos'][1]}, {self.best_item['pos'][0]}")
-            my_bot.movement.target = (self.best_item['pos'][1], self.best_item['pos'][0])
+            my_bot.movement.target = self.best_item['pos']
 
             return my_bot.movement.get_action(tomasz_map.agent)
 
