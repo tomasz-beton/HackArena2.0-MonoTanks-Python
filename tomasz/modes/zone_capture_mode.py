@@ -1,4 +1,4 @@
-from hackathon_bot import CapturedZone, Pass
+from hackathon_bot import CapturedZone, Pass, NeutralZone, BeingCapturedZone, BeingRetakenZone
 from tomasz.modes.mode import Mode
 
 
@@ -8,8 +8,17 @@ def are_all_zones_captured(tomasz_map):
         if isinstance(zone, CapturedZone) and zone.player_id != tomasz_map.game_state.my_agent.id:
             all_captured = False
             break
+        if isinstance(zone, NeutralZone):
+            all_captured = False
+            break
+        if isinstance(zone, BeingCapturedZone):
+            all_captured = False
+            break
+        if isinstance(zone, BeingRetakenZone):
+            all_captured = False
+            break
 
-    return not all_captured
+    return all_captured
 
 def get_closest_zone(tomasz_map):
     closest_zone = None
@@ -29,7 +38,7 @@ def get_closest_zone(tomasz_map):
 class ZoneCaptureMode(Mode):
 
     def get_priority(self, tomasz_map, my_bot):
-        return (1-are_all_zones_captured(tomasz_map)) * 0.7
+        return (1-are_all_zones_captured(tomasz_map)) * 0.65
 
     def get_action(self, tomasz_map, my_bot):
         closest_zone = get_closest_zone(tomasz_map)
