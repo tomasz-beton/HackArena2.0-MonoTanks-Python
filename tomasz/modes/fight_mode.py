@@ -13,12 +13,8 @@ class FightMode(Mode):
     def get_priority(self, tomasz_map, my_bot):
         self.closest_tank = my_bot.alignment.get_closest_enemy()
 
-        if self.closest_tank:
-            return min(
-                tomasz_map.agent.entity.turret.bullet_count * 0.5
-                + 1 if tomasz_map.agent.entity.secondary_item else 0,
-                1
-            )
+        if self.closest_tank and tomasz_map.agent.entity.turret.bullet_count > 0:
+            return 1
         else:
             return 0
 
@@ -31,8 +27,8 @@ class FightMode(Mode):
             return alignment_action
         
         if tomasz_map.agent.entity.secondary_item:
-            weapon_kurwa = tomasz_map.agent.entity.secondary_item + 1
-            return AbilityUse(weapon_kurwa)
+            weapon_kurwa = tomasz_map.agent.entity.secondary_item
+            return AbilityUse(Ability(weapon_kurwa))
         elif tomasz_map.agent.entity.turret.bullet_count > 0:
             return AbilityUse(Ability.FIRE_BULLET)
         else:

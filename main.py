@@ -84,10 +84,13 @@ class MyBot(HackathonBot):
         log.info(f"Action: {action}")
 
         if self.map.agent.entity.secondary_item:
-            log.info("Dumping item")
-            use_action = use_item(self.map.agent.entity.secondary_item)
-            if use_action:
-                return use_action
+            if self.map.agent.entity.secondary_item == SecondaryItemType.RADAR:
+                use_action = use_item(self.map.agent.entity.secondary_item)
+                if use_action:
+                    return use_action
+
+                log.info("Dumping radar")
+            
 
         return action or Pass()
 

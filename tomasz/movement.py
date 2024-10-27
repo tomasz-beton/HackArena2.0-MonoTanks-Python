@@ -169,8 +169,9 @@ def get_movement_action(agent: TomaszAgent, next_pos: Tuple[int, int], allow_bac
     if _is_facing_opposite_direction(move_delta, agent.entity.direction) and allow_backwards:
         return Movement(MovementDirection.BACKWARD)
 
-    rotation = Rotation(_get_needed_rotation(move_delta, agent.entity.direction), None)
-    if rotation == Rotation(None, None) and allow_random:
+
+    rotation = Rotation(_get_needed_rotation(move_delta, agent.entity.direction), RotationDirection.LEFT)
+    if rotation.tank_rotation_direction is None and allow_random:
         log.warning("Empty rotation! Making random movement\n"*10)
         return get_random_movement()
 
