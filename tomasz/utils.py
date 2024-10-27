@@ -7,9 +7,18 @@ from hackathon_bot import *
 def distance_l2(pos1, pos2):
     return np.sqrt((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2)
 
-def out_of_bounds(x, y, size):
-    return x < 0 or x >= size[0] or y < 0 or y >= size[1]
+def distance_l1(pos1, pos2):
+    return abs(pos1[0] - pos2[0]) + abs(pos1[1] - pos2[1])
 
+def distance_l_inf(pos1, pos2):
+    return max(abs(pos1[0] - pos2[0]), abs(pos1[1] - pos2[1]))
+
+def distance_min(pos1, pos2):
+    return min(abs(pos1[0] - pos2[0]), abs(pos1[1] - pos2[1]))
+
+def out_of_bounds(x, y, size):
+    #print(x, y, size)
+    return x < 0 or x >= size[0] or y < 0 or y >= size[1]
 
 
 direction_to_delta = {
@@ -73,52 +82,3 @@ def propagate(
         grid[start_pos] = 1
 
     return
-
-
-def possible_moves(pos, ori, walls):
-    if ori == Orientation.HORIZONTAL:
-        moves = { (pos[0] -1, pos[1]), (pos[0] + 1, pos[1]) }
-    else:
-        moves = { (pos[0], pos[1] - 1), (pos[0], pos[1] + 1) }
-
-    moves = { move for move in moves if not out_of_bounds(*move, walls.size) and not walls[move] }
-    return moves
-
-def shortest_path_dfs(start_pos: (int, int), start_dir: Orientation, walls: np.ndarray, target: Tuple[int, int] | np.ndarray):
-    visited = {
-        Orientation.HORIZONTAL: np.zeros((walls.shape), dtype=bool),
-        Orientation.VERTICAL: np.zeros((walls.shape), dtype=bool),
-    }
-
-    if isinstance(target, tuple):
-        target = np.zeros(walls.shape, dtype=bool)
-        target[target] = True
-
-    def dfs(pos, ori, path):
-        if target[pos]:
-            return path
-
-        visited[ori][pos] = True
-
-        for move in possible_moves(pos, ori, walls):
-            if visited[ori][move]:
-                continue
-
-            result = dfs(move, ori, path + [move])
-            if result:
-                return result
-            
-        if isinstance(path[-1], Orientation):
-            # we dont want to chagne orientation if we just changed it
-            return None
-        
-        new_ori = Orientation.HORIZONTAL if ori == Orientation.VERTICAL else Orientation.VERTICAL
-        result = dfs(move, new_ori, path + [new_ori])
-        if result:
-            return result
-
-
-        return None
-    
-
-    return dfs(start_pos, start_dir, [start_pos])

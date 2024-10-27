@@ -29,6 +29,7 @@ class TomaszAgent:
     def __init__(self, entity: AgentTank, position: Tuple[int, int]):
         self.entity = entity
         self.position = position
+        self.direction = entity.direction
 
 class TomaszMap:
     agent: TomaszAgent | None
@@ -78,7 +79,7 @@ class TomaszMap:
             self.bullets.append(entity_dict)
         elif isinstance(entity, AgentTank,):
             entity_dict = {'type': 'tank', 'agent': True, 'pos': (x, y), 'dir': entity.direction, 'turret_dir': entity.turret.direction}
-            self.agent = TomaszAgent(entity, (y, x))
+            self.agent = TomaszAgent(entity, (x, y))
             self.tanks.append(entity_dict)
         elif isinstance(entity, PlayerTank):
             entity_dict = {'type': 'tank', 'agent': False, 'pos': (x, y), 'dir': entity.direction, 'turret_dir': entity.turret.direction}
@@ -87,12 +88,6 @@ class TomaszMap:
             entity_dict = {'type': 'mine', 'pos': (x, y), 'exploded': entity.exploded}
             self.mines.append(entity_dict)
         elif isinstance(entity, Item):
-            # item_type = {
-            #     SecondaryItemType.DOUBLE_BULLET: 'item_double_bullet',
-            #     SecondaryItemType.LASER: 'item_laser',
-            #     SecondaryItemType.MINE: 'item_mine',
-            #     SecondaryItemType.RADAR: 'item_radar'
-            # }.get(entity.type, "item_unknown")
             entity_dict = {'type': "item", "item_type":entity.type, 'pos': (x, y)}
             self.items.append(entity_dict)
         
@@ -104,8 +99,8 @@ class TomaszMap:
             idx = chr(zone.index)
             self.zones[idx] = TomaszZone(zone)
 
-        for x, row in enumerate(game_map.tiles):
-            for y, tile in enumerate(row):
+        for y, row in enumerate(game_map.tiles):
+            for x, tile in enumerate(row):
                 if tile.zone:
                     zone = self.zones[chr(tile.zone.index)]
                     zone.add_pos(x, y)
@@ -137,7 +132,7 @@ class TomaszMap:
                 elif self.visible_arr[x, y] == 1:
                     char_map[x, y] = "⬞"
 
-        return char_map
+        return char_map.T
 
     def pretty_print(self):
         char_map = self._char_map()
