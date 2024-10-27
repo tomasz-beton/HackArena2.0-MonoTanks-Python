@@ -21,11 +21,12 @@ class AlignmentSystem:
         self.target = None
 
     def get_closest_enemy(self, distance = "l_min", only_visible=True):
+
         tomasz = self.map.agent
         enemies = self.map.tanks
         enemies = [enemy for enemy in enemies if not enemy["agent"]]
         if only_visible:
-            enemies = [enemy for enemy in enemies if self.map.visible_arr[enemy["pos"]]]
+            enemies = [enemy for enemy in enemies if enemy["ticks_since_seen"] < 10]
         if len(enemies) == 0:
             return None
         
@@ -41,6 +42,7 @@ class AlignmentSystem:
             raise ValueError("Invalid distance metric")
     
         closest_enemy = min(enemies, key=lambda e: distance(tomasz.position, e["pos"]))
+        log.warning(f"closest_enemy: {closest_enemy}")
         return closest_enemy
     
 
@@ -63,7 +65,7 @@ class AlignmentSystem:
         return (int(x), int(y))
     
 
-    def _get_turret_rotation(self, position: Tuple[int, int], target: Tuple[int, int], current_dir: Direction):
+    def get_turret_rotation(self, position: Tuple[int, int], target: Tuple[int, int], current_dir: Direction):
         if position == target:
             log.warning("position == target what the hell")
             return None
@@ -97,16 +99,26 @@ class AlignmentSystem:
         propagate(self.sight_on_target, self.map, self.target, "ALL", decay=1)
         
     def get_action(self):
+        log.warning(f"target: {self.target}")
+        log.warning(f"current position: {self.map.agent.position}")
+        log.warning(f"is_on_sight: {self.sight_on_target[self.map.agent.position]}")
+
+        self.check_alignment()
         if self.is_aligned:
             return None
+        
+        log.warning(f"get_action, is_aligned: {self.is_aligned}")
         
         tomasz = self.map.agent
         if not self.sight_on_target[tomasz.position]:
             closest_sight_point = self._closest_point(self.sight_on_target, tomasz.position)
             if closest_sight_point is None:
-                return
+                log.warning("no point in sight? this should not happen")
+                return 
+            log.warning(f"closest_sight_point: {closest_sight_point}")
             self.movement_system.target = closest_sight_point
             move = self.movement_system.get_action(tomasz)
+            log.warning(f"move: {move}")
             return move
         
         rot = self.get_turret_rotation(tomasz.position, self.target, tomasz.entity.turret.direction)
