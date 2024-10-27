@@ -1,6 +1,6 @@
 import math
 
-from tomasz.map_parser import TomaszMap
+from tomasz.map import TomaszMap
 
 
 def euclidean_distance(point1: (int, int), point2: (int, int)):

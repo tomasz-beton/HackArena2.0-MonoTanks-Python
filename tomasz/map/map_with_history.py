@@ -1,19 +1,26 @@
-from tomasz.map_parser import TomaszMap
+from tomasz.map import TomaszMap
 import numpy as np
 
-from tomasz.danger_map import get_danger, visualize_danger
+from tomasz.map.danger_map import get_danger, visualize_danger
+
+import logging
+log = logging.getLogger(__name__)
+log.disabled = False
 
 
 class TomaszMapWithHistory(TomaszMap):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.ticks_since_seen = np.full(self.size, np.inf, dtype=int)
+        self.last_danger_map_change = 0
         #self.max_ticks_since_seen = 10
+        self.danger = np.zeros(self.size)
 
     def update(self, new_map: TomaszMap):
         self._update_entities_lists(new_map)
         self._update_entities_grid(new_map)
         self._update_clenup()
+        self._update_danger()
 
     def _update_entities_lists(self, new_map: TomaszMap):
         # walls don't change
@@ -52,6 +59,18 @@ class TomaszMapWithHistory(TomaszMap):
                     if entity['type'] in ['bullet', 'laser', 'agent_tank', 'double_bullet']:
                         self.entities_grid[x, y] = []
 
+    def _update_danger(self):
+        danger = get_danger(self)
+        if np.any(self.danger - danger != 0): 
+            log.info("Danger map has changed")
+            # danger map has changed
+            self.last_danger_map_change = 0
+        else:
+            self.last_danger_map_change += 1
+
+        self.danger = danger
+            
+        return 
 
     def __repr__(self):
         return (
@@ -72,8 +91,7 @@ class TomaszMapWithHistory(TomaszMap):
         char_map = visualize_danger(danger_map)
 
         og_char_map = self._char_map()
-
-        # stack horizontally
+        
         char_map = np.hstack((og_char_map, char_map))
 
         char_map = np.pad(char_map, pad_width=1, mode='constant', constant_values="◻️")

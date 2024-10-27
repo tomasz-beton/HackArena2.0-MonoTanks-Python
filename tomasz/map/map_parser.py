@@ -36,7 +36,6 @@ class TomaszMap:
         self.agent = None
         self.initialized = False
 
-
         self.walls_arr = np.zeros(self.size, dtype=int)
         self.visible_arr = np.zeros(self.size, dtype=int)
         self.walls = []
@@ -201,8 +200,6 @@ class TomaszMap:
         }.get(item_type, "?")
 
     def to_json(self) -> str:
-    
-        # Prepare data as dictionary for JSON serialization
         data = {
             'walls': self.walls,  # Convert NumPy array to list for JSON serialization
             'visible': self.visible,

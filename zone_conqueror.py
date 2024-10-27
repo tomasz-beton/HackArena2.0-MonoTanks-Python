@@ -1,7 +1,7 @@
 import random
 
 from hackathon_bot import *
-from tomasz.map_parser import TomaszMap, TomaszAgent
+from tomasz.map import TomaszMap, TomaszAgent
 from tomasz.movement import MovementSystem
 
 

@@ -1,7 +1,8 @@
-from tomasz.map_parser import TomaszMap
+from tomasz.map import TomaszMap
 import numpy as np
 from hackathon_bot import *
 from typing import Tuple
+from tomasz.utils import out_of_bounds
 
 direction_to_delta = {
     Direction.UP: (-1, 0),
@@ -15,25 +16,20 @@ oridentation_to_delta = {
     Orientation.VERTICAL: (1, 0)
 }
 
-def out_of_bounds(x, y, size):
-    return x < 0 or x >= size[0] or y < 0 or y >= size[1]
-
-def propagate_danger(danger_map: np.ndarray, map: TomaszMap, start_pos: Tuple[int, int], delta: Tuple[int, int], decay=0.9):
+def propagate(grid: np.ndarray, map: TomaszMap, start_pos: Tuple[int, int], delta: Tuple[int, int], decay=0.9):
     x, y = start_pos
     delta_x, delta_y = delta
 
-    danger = 1
+    value = 1
     for _ in range(20):
         x += delta_x
         y += delta_y
         if out_of_bounds(x, y, map.size) or map.walls_arr[x, y]:
             break
-        danger_map[x, y] = 1 - (1 - danger_map[x, y]) * (1 - danger)
-        # print(danger_map[x, y])
-        danger *= decay
-        # print(danger)
+        grid[x, y] = 1 - (1 - grid[x, y]) * (1 - value)
+        value *= decay
 
-    return danger_map
+    return grid
 
 def get_danger(map: TomaszMap):
     # mines are danger 
@@ -49,16 +45,16 @@ def get_danger(map: TomaszMap):
                     danger_map[i, j] = 1
                 elif entity['type'] == 'bullet':
                     delta = direction_to_delta[entity['dir']]
-                    propagate_danger(danger_map, map, (i, j), delta, decay=0.9)
+                    propagate(danger_map, map, (i, j), delta, decay=0.9)
                 elif entity['type'] == 'laser':
                     delta1 = oridentation_to_delta[entity['ori']]
                     delta2 = (-delta1[0], -delta1[1])
-                    propagate_danger(danger_map, map, (i, j), delta1, decay=1)
-                    propagate_danger(danger_map, map, (i, j), delta2, decay=1)
+                    propagate(danger_map, map, (i, j), delta1, decay=1)
+                    propagate(danger_map, map, (i, j), delta2, decay=1)
                     danger_map[i, j] = 1
                 elif entity['type'] == 'tank':
                     delta = direction_to_delta[entity['turret_dir']]
-                    propagate_danger(danger_map, map, (i, j), delta1, decay=0.7)
+                    propagate(danger_map, map, (i, j), delta1, decay=0.7)
 
     return danger_map
 
@@ -77,3 +73,12 @@ def visualize_danger(danger_map: np.ndarray) -> np.ndarray:
             char_map[i, j] = symbols[level]
     
     return char_map
+
+
+def get_sight(map: TomaszMap):
+    sight_map = np.zeros(map.size, dtype=int)
+    for enemy in map.tanks:
+        for delta in direction_to_delta.values():
+            propagate(sight_map, map, enemy['pos'], delta, decay=1)
+    return sight_map
+        

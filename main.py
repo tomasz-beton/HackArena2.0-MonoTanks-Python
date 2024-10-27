@@ -1,6 +1,11 @@
 from hackathon_bot import *
-from tomasz.map_parser import TomaszMap, TomaszAgent
+from tomasz.map import TomaszMap, TomaszAgent, TomaszMapWithHistory
 from tomasz.movement import MovementSystem
+
+import logging
+log = logging.getLogger(__name__)
+log.disabled = False
+logging.basicConfig(level=logging.INFO)
 
 
 def get_closest_available_zone(game_state: GameState, tomasz_agent: TomaszAgent):
