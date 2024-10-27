@@ -71,29 +71,29 @@ class TomaszMap:
             entity_dict = {'type': 'laser', 'pos': (x, y), 'ori': entity.orientation}
             self.lasers.append(entity_dict)
         elif isinstance(entity, DoubleBullet):
-            entity_dict = {'type': 'double_bullet', 'pos': (x, y), 'dir': entity.direction}
+            entity_dict = {'type': 'bullet', 'double':True, 'pos': (x, y), 'dir': entity.direction}
             self.bullets.append(entity_dict)
-        elif isinstance(entity, Bullet):
-            entity_dict = {'type': 'bullet', 'pos': (x, y), 'dir': entity.direction}
+        elif isinstance(entity, Bullet, ):
+            entity_dict = {'type': 'bullet', 'double':False, 'pos': (x, y), 'dir': entity.direction}
             self.bullets.append(entity_dict)
         elif isinstance(entity, AgentTank,):
-            entity_dict = {'type': 'agent_tank', 'pos': (x, y), 'dir': entity.direction, 'turret_dir': entity.turret.direction}
+            entity_dict = {'type': 'tank', 'agent': True, 'pos': (x, y), 'dir': entity.direction, 'turret_dir': entity.turret.direction}
             self.agent = TomaszAgent(entity, (y, x))
             self.tanks.append(entity_dict)
         elif isinstance(entity, PlayerTank):
-            entity_dict = {'type': 'player_tank', 'pos': (x, y), 'dir': entity.direction, 'turret_dir': entity.turret.direction}
+            entity_dict = {'type': 'tank', 'agent': False, 'pos': (x, y), 'dir': entity.direction, 'turret_dir': entity.turret.direction}
             self.tanks.append(entity_dict)
         elif isinstance(entity, Mine):
             entity_dict = {'type': 'mine', 'pos': (x, y), 'exploded': entity.exploded}
             self.mines.append(entity_dict)
         elif isinstance(entity, Item):
-            item_type = {
-                SecondaryItemType.DOUBLE_BULLET: 'item_double_bullet',
-                SecondaryItemType.LASER: 'item_laser',
-                SecondaryItemType.MINE: 'item_mine',
-                SecondaryItemType.RADAR: 'item_radar'
-            }.get(entity.type, "item_unknown")
-            entity_dict = {'type': item_type, 'pos': (x, y)}
+            # item_type = {
+            #     SecondaryItemType.DOUBLE_BULLET: 'item_double_bullet',
+            #     SecondaryItemType.LASER: 'item_laser',
+            #     SecondaryItemType.MINE: 'item_mine',
+            #     SecondaryItemType.RADAR: 'item_radar'
+            # }.get(entity.type, "item_unknown")
+            entity_dict = {'type': "item", "item_type":entity.type, 'pos': (x, y)}
             self.items.append(entity_dict)
         
         self.entities_grid[x, y] = [entity_dict]
@@ -166,16 +166,17 @@ class TomaszMap:
             return "■"
         elif entity_type == 'laser':
             return "|" if entity_dict['ori'] is Orientation.HORIZONTAL else "-"
-        elif entity_type == 'double_bullet' or entity_type == 'bullet':
-            return self._bullet_direction_symbol(entity_dict['dir'], entity_type == 'double_bullet')
-        elif entity_type == 'agent_tank':
-            return "✪"
-        elif entity_type == 'player_tank':
-            return "◯"
+        elif entity_type == 'bullet':
+            return self._bullet_direction_symbol(entity_dict['dir'], is_double = entity_dict['double'])
+        elif entity_type == 'tank':
+            if entity_dict['agent']:
+                return "✪"
+            else:
+                return "☠"
         elif entity_type == 'mine':
             return "x" if entity_dict['exploded'] else "X"
-        elif entity_type in ["item_double_bullet", "item_laser", "item_mine", "item_radar"]:
-            return self._item_symbol(entity_type)
+        elif entity_type == 'item':
+            return self._item_symbol(entity_dict["item_type"])
 
         return "?"
 
@@ -197,10 +198,10 @@ class TomaszMap:
 
     def _item_symbol(self, item_type: str):
         return {
-            "item_double_bullet": "D",
-            "item_laser": "L",
-            "item_mine": "M",
-            "item_radar": "R"
+            ItemType.DOUBLE_BULLET: "D",
+            ItemType.LASER: "L",
+            ItemType.MINE: "M",
+            ItemType.RADAR: "R"
         }.get(item_type, "?")
 
     def to_json(self) -> str:

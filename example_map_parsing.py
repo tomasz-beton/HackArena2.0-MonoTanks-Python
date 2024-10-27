@@ -8,8 +8,7 @@ import os
 import random
 
 from hackathon_bot import *
-from tomasz.map_parser import TomaszMap
-from tomasz.map_with_history import TomaszMapWithHistory
+from tomasz.map import TomaszMap, TomaszMapWithHistory
 import time
 
 
@@ -22,9 +21,9 @@ class ExampleBot(HackathonBot):
     def next_move(self, game_state: GameState) -> ResponseAction:
         t1 = time.perf_counter()
         if self.map is None:
-            self.map = TomaszMapWithHistory(game_state.map)
+            self.map = TomaszMapWithHistory(game_state)
         else:
-            new_map = TomaszMap(game_state.map)
+            new_map = TomaszMap(game_state)
             self.map.update(new_map)
         t2 = time.perf_counter()
         print(f"Time to update map: {1e3*(t2 - t1):.2f} ms")
