@@ -1,6 +1,6 @@
 from hackathon_bot import ResponseAction
 from tomasz.map import TomaszMapWithHistory
-from zone_conqueror import MyBot
+from main import MyBot
 
 
 class Mode:
