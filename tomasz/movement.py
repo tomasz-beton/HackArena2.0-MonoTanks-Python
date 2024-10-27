@@ -143,7 +143,7 @@ def get_random_movement() -> Movement | Rotation:
         return Movement(random.choice(list(MovementDirection)))
     return Rotation(random.choice(list(RotationDirection)), None)
 
-def get_movement_action(agent: TomaszAgent, next_pos: Tuple[int, int], allow_backwards=False, allow_random=True) -> Movement | Rotation:
+def get_movement_action(agent: TomaszAgent, next_pos: Tuple[int, int], allow_backwards=False, allow_random=True) -> Movement | Rotation | None:
     """
     Get the movement action to move the agent to the next position.
 
@@ -163,6 +163,10 @@ def get_movement_action(agent: TomaszAgent, next_pos: Tuple[int, int], allow_bac
     """
     move_delta = get_move_delta(agent.position, next_pos)
 
+    if abs(move_delta[0]) > 1 or abs(move_delta[1]) > 1:
+        log.error(f"Invalid move delta: {move_delta}")
+        return None
+
     if _is_facing_right_direction(move_delta, agent.entity.direction):
         return Movement(MovementDirection.FORWARD)
 
@@ -170,9 +174,9 @@ def get_movement_action(agent: TomaszAgent, next_pos: Tuple[int, int], allow_bac
         return Movement(MovementDirection.BACKWARD)
 
     rotation = Rotation(_get_needed_rotation(move_delta, agent.entity.direction), None)
-    if rotation == Rotation(None, None) and allow_random:
+    if rotation == Rotation(None, None):
         log.warning("Empty rotation! Making random movement\n"*10)
-        return get_random_movement()
+        return None
 
     return rotation
 
@@ -232,6 +236,10 @@ class MovementSystem:
                 self._next_position = self.path.pop(0)
 
             movement_action = get_movement_action(tomasz_agent, self._next_position)
+            if not movement_action:
+                log.warning("Performing random movement and updating map!!\n" * 10)
+                movement_action = get_random_movement()
+                self.update_map(self.tomasz_map)
             log.info(f"Moving from {tomasz_agent.position} to {self._next_position} with {movement_action}")
             return movement_action
 
