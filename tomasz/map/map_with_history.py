@@ -79,6 +79,9 @@ class TomaszMapWithHistory(TomaszMap):
                     if entity['type'] in ['bullet', 'laser']:
                         # we dont want to remember bullets and lasers that are not visible
                         self.entities_grid[x, y] = []
+                    if entity['type'] == 'tank' and entity['agent']:
+                        # we dont want to remember our own previous position
+                        self.entities_grid[x, y] = []
 
     def _update_danger(self):
         danger = get_danger(self)
