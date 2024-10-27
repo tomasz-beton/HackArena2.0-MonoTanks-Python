@@ -36,13 +36,13 @@ def visualize_danger(danger_map: np.ndarray) -> np.ndarray:
     # Initialize char_map with spaces, matching the shape of danger_map
     char_map = np.full(danger_map.shape, " ", dtype=str)
     
-    for i in range(danger_map.shape[0]):
-        for j in range(danger_map.shape[1]):
+    for j in range(danger_map.shape[0]):
+        for i in range(danger_map.shape[1]):
             # Map the danger level to an index in symbols
             level = int(danger_map[i, j] * (len(symbols) - 1))
             char_map[i, j] = symbols[level]
     
-    return char_map
+    return char_map.T
 
 
 def get_sight(map: TomaszMap):

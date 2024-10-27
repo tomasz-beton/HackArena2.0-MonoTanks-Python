@@ -71,6 +71,17 @@ def _is_facing_opposite_direction(move_delta, current_direction):
         1, 0) and current_direction == Direction.LEFT or move_delta == (
         0, 1) and current_direction == Direction.UP or move_delta == (-1, 0) and current_direction == Direction.RIGHT
 
+def parse_dir_to_delta(dir):
+    if dir == Direction.UP:
+        return (0, -1)
+    if dir == Direction.DOWN:
+        return (0, 1)
+    if dir == Direction.LEFT:
+        return (-1, 0)
+    if dir == Direction.RIGHT:
+        return (1, 0)
+    return None
+
 
 def _get_needed_rotation(move_delta, current_direction) -> RotationDirection:
     """
@@ -84,7 +95,6 @@ def _get_needed_rotation(move_delta, current_direction) -> RotationDirection:
     -------
     RotationDirection
     """
-
     if move_delta == (1, 0):
         if current_direction == Direction.UP:
             return RotationDirection.RIGHT

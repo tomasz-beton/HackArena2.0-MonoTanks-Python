@@ -54,7 +54,7 @@ def is_walkable(tomasz_map: TomaszMapWithHistory, tile_coordinates, danger_thres
     bool
         True if the neighbor is walkable.
     """
-    y, x = tile_coordinates
+    x, y = tile_coordinates
     if x < 0 or y < 0:
         return False
     if x >= tomasz_map.size[0] or y >= tomasz_map.size[1]:
