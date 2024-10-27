@@ -12,22 +12,20 @@ log = logging.getLogger(__name__)
 log.disabled = False
 
 
-class FightSystem:
+class AlignmentSystem:
     def __init__(self, tomasz_map: TomaszMapWithHistory, movement_system: MovementSystem):
         self.map = tomasz_map
         self.movement_system = movement_system
 
-    def get_priority(self):
-        enemy = self.get_closest_enemy()
-        if enemy is None:
-            return 0
-        else:
-            return 1
+        self.is_aligned = False
+        self.target = None
 
-    def get_closest_enemy(self, distance = "l_min"):
+    def get_closest_enemy(self, distance = "l_min", only_visible=True):
         tomasz = self.map.agent
         enemies = self.map.tanks
         enemies = [enemy for enemy in enemies if not enemy["agent"]]
+        if only_visible:
+            enemies = [enemy for enemy in enemies if self.map.visible_arr[enemy["pos"]]]
         if len(enemies) == 0:
             return None
         
@@ -47,7 +45,7 @@ class FightSystem:
         return closest_enemy
     
 
-    def closest_point(self, bool_array, start, distance="l1"):
+    def _closest_point(self, bool_array, start, distance="l1"):
         true_points = np.argwhere(bool_array)
         
         if true_points.size == 0:
@@ -66,7 +64,7 @@ class FightSystem:
         return (int(x), int(y))
     
 
-    def get_turret_rotation(self, position: Tuple[int, int], target: Tuple[int, int], current_dir: Direction):
+    def _get_turret_rotation(self, position: Tuple[int, int], target: Tuple[int, int], current_dir: Direction):
         if position == target:
             log.warning("position == target what the hell")
             return None
@@ -96,6 +94,10 @@ class FightSystem:
 
     def get_action(self):
         log.info("get_action")
+        if self.is_aligned:
+            log.info("is aligned")
+            return None
+        
         tomasz = self.map.agent
         log.warning(f"tomasz: {tomasz.position} {tomasz.direction}, {tomasz.entity}")
         closest_enemy = self.get_closest_enemy()
@@ -115,10 +117,10 @@ class FightSystem:
                 log.info("rotating turret!")
                 return Rotation(None, rot)
             
-            log.info("SHOOTA!")
-            return AbilityUse(Ability.FIRE_BULLET)
+            self.is_aligned = True
+            return None
         
-        closest_sight_point = self.closest_point(sight, tomasz.position)
+        closest_sight_point = self._closest_point(sight, tomasz.position)
         if closest_sight_point is None:
             log.info("no point in sight? this should not happen")
             return
@@ -126,9 +128,26 @@ class FightSystem:
         self.movement_system.target = closest_sight_point
         move = self.movement_system.get_action(tomasz)
 
-        # rotate towards the enemy
-
         return move
+    
+    def check_alignment(self):
+        tomasz = self.map.agent
+        closest_enemy = self.get_closest_enemy()
+        sight = np.zeros(self.map.size, dtype=bool)
+        propagate(sight, self.map, closest_enemy["pos"], "ALL", decay=1)
+        
+        if not sight[tomasz.position]:
+            self.is_aligned = False
+            return False
+        
+        rot = self.get_turret_rotation(tomasz.position, closest_enemy["pos"], tomasz.entity.turret.direction)
+        if rot is not None:
+            self.is_aligned = False
+            return False
+        
+        self.is_aligned = True
+            
+        return True
 
 
 # def possible_moves(pos, ori, walls):
