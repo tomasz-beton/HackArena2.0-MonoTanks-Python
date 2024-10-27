@@ -2,7 +2,7 @@ import logging
 import random
 from typing import Tuple
 
-from hackathon_bot import CapturedZone, NeutralZone, BeingCapturedZone, BeingRetakenZone
+from hackathon_bot import CapturedZone, NeutralZone, BeingCapturedZone, BeingRetakenZone, BeingContestedZone
 from tomasz.a_star import is_walkable
 from tomasz.modes.mode import Mode
 from tomasz.utils import distance_l1
@@ -21,6 +21,9 @@ def are_all_zones_captured(tomasz_map):
             all_captured = False
             break
         if isinstance(zone, BeingCapturedZone):
+            all_captured = False
+            break
+        if isinstance(zone, BeingContestedZone):
             all_captured = False
             break
         if isinstance(zone, BeingRetakenZone):
