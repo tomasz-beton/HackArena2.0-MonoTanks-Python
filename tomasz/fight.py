@@ -91,10 +91,10 @@ class AlignmentSystem:
         return result
     
 
-    def set_target(self, target):
+    def set_target(self, target: Tuple[int, int]):
         self.target = target
-        sight = np.zeros(self.map.size, dtype=bool)
-        propagate(sight, self.map, target, "ALL", decay=1)
+        self.sight_on_target = np.zeros(self.map.size, dtype=bool)
+        propagate(self.sight_on_target, self.map, self.target, "ALL", decay=1)
         
     def get_action(self):
         if self.is_aligned:
