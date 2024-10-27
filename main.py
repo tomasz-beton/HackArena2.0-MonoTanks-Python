@@ -34,6 +34,7 @@ class MyBot(HackathonBot):
     is_capturing: bool = False
     target_zone: Zone | None = None
     wait: int = 0
+    map: TomaszMapWithHistory = None
 
     def __init__(self):
         self.movement = None
@@ -43,6 +44,11 @@ class MyBot(HackathonBot):
         pass
 
     def next_move(self, game_state: GameState) -> ResponseAction:
+        if self.map is None:
+            self.map = TomaszMapWithHistory(game_state.map)
+        else:
+            self.map.update(TomaszMap(game_state.map))
+
         game_map = TomaszMap(game_state.map)
         if not self.movement:
             self.movement = MovementSystem(game_map)

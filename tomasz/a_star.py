@@ -36,7 +36,7 @@ def _get_movements_4n():
     return [(1, 0, 1.0), (0, 1, 1.0), (-1, 0, 1.0), (0, -1, 1.0)]
 
 
-def _is_walkable(map, neighbor):
+def _is_walkable(map, neighbor, danger_threshold=0.2):
     """
     Check if the neighbor is walkable.
 
@@ -46,6 +46,8 @@ def _is_walkable(map, neighbor):
         Parsed map.
     neighbor: (int, int)
         The neighbor to check.
+    danger: np.ndarray
+        The danger map.
 
     Returns
     -------
@@ -59,6 +61,8 @@ def _is_walkable(map, neighbor):
         return False
     if map.walls_arr[x, y] == 1:
         return False
+    # if map.walls_arr[x, y] == 1 or map.danger[x, y] > danger_threshold:
+    #     return False
     return True
 
 
