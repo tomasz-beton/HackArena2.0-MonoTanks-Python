@@ -24,7 +24,7 @@ def euclidean_distance(point1: (int, int), point2: (int, int)):
     return math.sqrt(dist2)
 
 
-def _get_movements_4n():
+def get_movements_4n():
     """
     Get all possible 4-connectivity movements.
 
@@ -107,7 +107,7 @@ def a_star(tomasz_map: TomaszMapWithHistory, start: (int, int), goal: (int, int)
     List
         Array of points to reach the goal.
     """
-    movements = _get_movements_4n()
+    movements = get_movements_4n()
 
     # The set of nodes already evaluated.
     closed_set = set()
