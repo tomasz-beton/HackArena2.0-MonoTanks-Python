@@ -1,11 +1,13 @@
-from hackathon_bot import Movement, Rotation, MovementDirection, Direction, RotationDirection
-from tomasz.map import TomaszAgent, TomaszMap
-from typing import Tuple
-from tomasz.a_star import a_star
-
 import logging
+from typing import Tuple
+
+from hackathon_bot import Movement, Rotation, MovementDirection, Direction, RotationDirection
+from tomasz.a_star import a_star
+from tomasz.map import TomaszAgent, TomaszMap
+
 log = logging.getLogger(__name__)
 log.disabled = False
+
 
 def get_move_delta(current, next):
     """
@@ -42,9 +44,10 @@ def _is_facing_right_direction(move_delta, current_direction):
     bool
         True if the agent is facing the right direction.
     """
+    log.info(f"move_delta: {move_delta}, current_direction: {current_direction}")
     return move_delta == (0, -1) and current_direction == Direction.UP or move_delta == (
-    1, 0) and current_direction == Direction.RIGHT or move_delta == (
-    0, 1) and current_direction == Direction.DOWN or move_delta == (-1, 0) and current_direction == Direction.LEFT
+        1, 0) and current_direction == Direction.RIGHT or move_delta == (
+        0, 1) and current_direction == Direction.DOWN or move_delta == (-1, 0) and current_direction == Direction.LEFT
 
 
 def _is_facing_opposite_direction(move_delta, current_direction):
@@ -63,9 +66,10 @@ def _is_facing_opposite_direction(move_delta, current_direction):
     bool
         True if the agent is facing the opposite direction.
     """
+    log.info(f"move_delta: {move_delta}, current_direction: {current_direction}")
     return move_delta == (0, -1) and current_direction == Direction.DOWN or move_delta == (
-    1, 0) and current_direction == Direction.LEFT or move_delta == (
-    0, 1) and current_direction == Direction.UP or move_delta == (-1, 0) and current_direction == Direction.RIGHT
+        1, 0) and current_direction == Direction.LEFT or move_delta == (
+        0, 1) and current_direction == Direction.UP or move_delta == (-1, 0) and current_direction == Direction.RIGHT
 
 
 def _get_needed_rotation(move_delta, current_direction) -> RotationDirection:
@@ -142,6 +146,7 @@ def get_movement_action(agent: TomaszAgent, next_pos: Tuple[int, int], allow_bac
 
     return Rotation(_get_needed_rotation(move_delta, agent.entity.direction), None)
 
+
 class MovementSystem:
     path: list = []
     target: (int, int) = None
@@ -152,7 +157,6 @@ class MovementSystem:
     def __init__(self, tomasz_map: TomaszMap):
         self.tomasz_map = tomasz_map
         log.info("Movement system initialized")
-        
 
     def get_action(self, tomasz_agent: TomaszAgent) -> Movement | Rotation | None:
         if not self.target:
@@ -191,9 +195,9 @@ class MovementSystem:
             log.info(f"Moving from {tomasz_agent.position} to {self._next_position} with {movement_action}")
             return movement_action
 
-
     def update_map(self, tomasz_map: TomaszMap):
         self.tomasz_map = tomasz_map
+        self._next_position = None
+        self.target_reached = False
         if self.target:
             self.path = a_star(self.tomasz_map, self.tomasz_map.agent.position, self.target)
-            self.target_reached = False

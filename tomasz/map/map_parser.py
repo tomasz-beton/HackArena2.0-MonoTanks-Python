@@ -31,6 +31,8 @@ class TomaszAgent:
         self.position = position
 
 class TomaszMap:
+    agent: TomaszAgent | None
+
     def __init__(self, game_state: GameState):
         game_map = game_state.map
         self.game_state = game_state
