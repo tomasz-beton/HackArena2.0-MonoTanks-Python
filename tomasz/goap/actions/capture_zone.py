@@ -1,6 +1,6 @@
 from hackathon_bot import GameState, CapturedZone, HackathonBot
 from tomasz.goap.actions.goap_action import GOAPAction
-from tomasz.map_parser import TomaszMap
+from tomasz.map import TomaszMap
 from zone_conqueror import MyBot
 
 

@@ -4,7 +4,7 @@ from hackathon_bot import GameState
 from tomasz.goap.actions.goap_action import GOAPAction
 from tomasz.goap.goals.goap_goal import GOAPGoal
 from tomasz.goap.goap_action_planner import get_action_planner
-from tomasz.map_parser import TomaszMap
+from tomasz.map import TomaszMap
 from zone_conqueror import MyBot
 
 
