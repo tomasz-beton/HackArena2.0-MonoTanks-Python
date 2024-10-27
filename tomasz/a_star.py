@@ -1,6 +1,6 @@
 import math
 
-from tomasz.map import TomaszMap
+from tomasz.map import TomaszMapWithHistory
 
 
 def euclidean_distance(point1: (int, int), point2: (int, int)):
@@ -36,33 +36,31 @@ def _get_movements_4n():
     return [(1, 0, 1.0), (0, 1, 1.0), (-1, 0, 1.0), (0, -1, 1.0)]
 
 
-def _is_walkable(map, neighbor, danger_threshold=0.2):
+def is_walkable(tomasz_map: TomaszMapWithHistory, tile_coordinates, danger_threshold=0.2):
     """
     Check if the neighbor is walkable.
 
     Parameters
     ----------
-    map: TomaszMap
+    tomasz_map: TomaszMapWithHistory
         Parsed map.
-    neighbor: (int, int)
-        The neighbor to check.
-    danger: np.ndarray
-        The danger map.
+    tile_coordinates: (int, int)
+        The tile to check.
+    danger_threshold: float
+        The danger threshold.
 
     Returns
     -------
     bool
         True if the neighbor is walkable.
     """
-    y, x = neighbor
+    y, x = tile_coordinates
     if x < 0 or y < 0:
         return False
-    if x >= map.size[0] or y >= map.size[1]:
+    if x >= tomasz_map.size[0] or y >= tomasz_map.size[1]:
         return False
-    if map.walls_arr[x, y] == 1:
+    if tomasz_map.walls_arr[x, y] == 1 or tomasz_map.danger[x, y] > danger_threshold:
         return False
-    # if map.walls_arr[x, y] == 1 or map.danger[x, y] > danger_threshold:
-    #     return False
     return True
 
 
@@ -89,20 +87,13 @@ def _reconstruct_path(came_from, current):
     return total_path[:-1][::-1]
 
 
-# Data class for the map, no methods
-# class TomaszMap:
-#     def __init__(self, game_map):
-#         self.walls_arr = np.zeros((len(game_map.tiles), len(game_map.tiles[0])), dtype=int)
-#         self.size = (len(game_map.tiles), len(game_map.tiles[0]))
-
-
-def a_star(map: TomaszMap, start: (int, int), goal: (int, int), heuristic=euclidean_distance):
+def a_star(tomasz_map: TomaszMapWithHistory, start: (int, int), goal: (int, int), heuristic=euclidean_distance):
     """
     A* algorithm to find the shortest path between two points on the map.
 
     Parameters
     ----------
-    map: TomaszMap
+    tomasz_map: TomaszMapWithHistory
         Parsed map. Containing the occupancy grid (walls_arr). Rows[Columns]
     start: (int, int)
         The starting point, (x, y).
@@ -114,7 +105,7 @@ def a_star(map: TomaszMap, start: (int, int), goal: (int, int), heuristic=euclid
     Returns
     -------
     List
-        List of points to reach the goal.
+        Array of points to reach the goal.
     """
     movements = _get_movements_4n()
 
@@ -151,7 +142,7 @@ def a_star(map: TomaszMap, start: (int, int), goal: (int, int), heuristic=euclid
         for dx, dy, _ in movements:
             neighbor = current[0] + dx, current[1] + dy
 
-            if not _is_walkable(map, neighbor):
+            if not is_walkable(tomasz_map, neighbor):
                 continue
 
             # The distance from start to a neighbor

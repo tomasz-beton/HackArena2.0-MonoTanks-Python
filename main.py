@@ -45,6 +45,10 @@ class MyBot(HackathonBot):
         if not self.movement:
             self.movement = MovementSystem(self.map)
 
+        if self.map.last_danger_map_change == 0:
+            log.warning("Danger map updated")
+            self.movement.update_map(self.map)
+
         if self.died and not game_state.my_agent.is_dead:
             log.info("Respawned")
             self.movement.update_map(self.map)
