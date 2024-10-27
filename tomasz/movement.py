@@ -1,12 +1,13 @@
 import logging
+import random
 from typing import Tuple
 
 from hackathon_bot import Movement, Rotation, MovementDirection, Direction, RotationDirection
 from tomasz.a_star import a_star
-from tomasz.map import TomaszAgent, TomaszMap
+from tomasz.map import TomaszAgent, TomaszMap, TomaszMapWithHistory
 
 log = logging.getLogger(__name__)
-log.disabled = False
+log.disabled = True
 
 
 def get_move_delta(current, next):
@@ -128,7 +129,21 @@ def _get_needed_rotation(move_delta, current_direction) -> RotationDirection:
             return RotationDirection.RIGHT
 
 
-def get_movement_action(agent: TomaszAgent, next_pos: Tuple[int, int], allow_backwards=False) -> Movement | Rotation:
+def get_random_movement() -> Movement | Rotation:
+    """
+    Get a random movement action.
+
+    Returns
+    -------
+    Movement | Rotation
+        The movement action.
+    """
+
+    if random.randint(0, 100) % 2 == 0:
+        return Movement(random.choice(list(MovementDirection)))
+    return Rotation(random.choice(list(RotationDirection)), None)
+
+def get_movement_action(agent: TomaszAgent, next_pos: Tuple[int, int], allow_backwards=False, allow_random=True) -> Movement | Rotation:
     """
     Get the movement action to move the agent to the next position.
 
@@ -154,17 +169,22 @@ def get_movement_action(agent: TomaszAgent, next_pos: Tuple[int, int], allow_bac
     if _is_facing_opposite_direction(move_delta, agent.entity.direction) and allow_backwards:
         return Movement(MovementDirection.BACKWARD)
 
-    return Rotation(_get_needed_rotation(move_delta, agent.entity.direction), None)
+    rotation = Rotation(_get_needed_rotation(move_delta, agent.entity.direction), None)
+    if rotation == Rotation(None, None) and allow_random:
+        log.warning("Empty rotation! Making random movement\n"*10)
+        return get_random_movement()
+
+    return rotation
 
 
 class MovementSystem:
     path: list = []
     target: (int, int) = None
-    tomasz_map: TomaszMap = None
+    tomasz_map: TomaszMapWithHistory = None
     target_reached: bool = False
     _next_position: (int, int) = None
 
-    def __init__(self, tomasz_map: TomaszMap):
+    def __init__(self, tomasz_map: TomaszMapWithHistory):
         self.tomasz_map = tomasz_map
         log.info("Movement system initialized")
 
@@ -205,7 +225,7 @@ class MovementSystem:
             log.info(f"Moving from {tomasz_agent.position} to {self._next_position} with {movement_action}")
             return movement_action
 
-    def update_map(self, tomasz_map: TomaszMap):
+    def update_map(self, tomasz_map: TomaszMapWithHistory):
         self.tomasz_map = tomasz_map
         self._next_position = None
         self.target_reached = False
