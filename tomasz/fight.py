@@ -89,45 +89,70 @@ class AlignmentSystem:
         log.warning(f"result: {result}")
 
         return result
-        
+    
 
+    def set_target(self, target):
+        self.target = target
+        sight = np.zeros(self.map.size, dtype=bool)
+        propagate(sight, self.map, target, "ALL", decay=1)
+        
     def get_action(self):
-        log.info("get_action")
         if self.is_aligned:
-            log.info("is aligned")
             return None
         
         tomasz = self.map.agent
-        log.warning(f"tomasz: {tomasz.position} {tomasz.direction}, {tomasz.entity}")
-        closest_enemy = self.get_closest_enemy()
-        log.info(f"closest_enemy: {closest_enemy}")
-        if closest_enemy is None:
-            log.info("no enemies?")
-            return
+        if not self.sight_on_target[tomasz.position]:
+            closest_sight_point = self._closest_point(self.sight_on_target, tomasz.position)
+            if closest_sight_point is None:
+                return
+            self.movement_system.target = closest_sight_point
+            move = self.movement_system.get_action(tomasz)
+            return move
         
-        sight = np.zeros(self.map.size, dtype=bool)
-        propagate(sight, self.map, closest_enemy["pos"], "ALL", decay=1)
+        rot = self.get_turret_rotation(tomasz.position, self.target, tomasz.entity.turret.direction)
+        if rot is not None:
+            return Rotation(None, rot)
         
-        if sight[tomasz.position]:
-            log.info("we have a sight on the enemy")
+        self.is_aligned = True
+        return None
+        
 
-            rot = self.get_turret_rotation(tomasz.position, closest_enemy["pos"], tomasz.entity.turret.direction)
-            if rot is not None:
-                log.info("rotating turret!")
-                return Rotation(None, rot)
+        # log.info("get_action")
+        # if self.is_aligned:
+        #     log.info("is aligned")
+        #     return None
+        
+        # tomasz = self.map.agent
+        # log.warning(f"tomasz: {tomasz.position} {tomasz.direction}, {tomasz.entity}")
+        # closest_enemy = self.get_closest_enemy()
+        # log.info(f"closest_enemy: {closest_enemy}")
+        # if closest_enemy is None:
+        #     log.info("no enemies?")
+        #     return
+        
+        # sight = np.zeros(self.map.size, dtype=bool)
+        # propagate(sight, self.map, closest_enemy["pos"], "ALL", decay=1)
+        
+        # if sight[tomasz.position]:
+        #     log.info("we have a sight on the enemy")
+
+        #     rot = self.get_turret_rotation(tomasz.position, closest_enemy["pos"], tomasz.entity.turret.direction)
+        #     if rot is not None:
+        #         log.info("rotating turret!")
+        #         return Rotation(None, rot)
             
-            self.is_aligned = True
-            return None
+        #     self.is_aligned = True
+        #     return None
         
-        closest_sight_point = self._closest_point(sight, tomasz.position)
-        if closest_sight_point is None:
-            log.info("no point in sight? this should not happen")
-            return
+        # closest_sight_point = self._closest_point(sight, tomasz.position)
+        # if closest_sight_point is None:
+        #     log.info("no point in sight? this should not happen")
+        #     return
         
-        self.movement_system.target = closest_sight_point
-        move = self.movement_system.get_action(tomasz)
+        # self.movement_system.target = closest_sight_point
+        # move = self.movement_system.get_action(tomasz)
 
-        return move
+        # return move
     
     def check_alignment(self):
         tomasz = self.map.agent
