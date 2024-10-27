@@ -39,9 +39,8 @@ class AlignmentSystem:
             distance = distance_l_inf
         else:
             raise ValueError("Invalid distance metric")
-        
-        distance = distance_l1 if distance == "l1" else distance_l2
-        closest_enemy = min(enemies, key=lambda e: distance_l2(tomasz.position, e["pos"]))
+    
+        closest_enemy = min(enemies, key=lambda e: distance(tomasz.position, e["pos"]))
         return closest_enemy
     
 
