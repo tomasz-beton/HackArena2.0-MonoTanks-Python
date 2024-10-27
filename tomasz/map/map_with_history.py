@@ -27,7 +27,7 @@ class TomaszMapWithHistory(TomaszMap):
         # walls don't change
         self.zones = new_map.zones
 
-        self.agent_position = new_map.agent
+        self.agent = new_map.agent
         self.visible = new_map.visible
         self.visible_arr = new_map.visible_arr
 
