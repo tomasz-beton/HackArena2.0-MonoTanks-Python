@@ -1,12 +1,15 @@
+import logging
 import random
 from typing import Tuple
-from hackathon_bot import CapturedZone, Pass, NeutralZone, BeingCapturedZone, BeingRetakenZone
+
+from hackathon_bot import CapturedZone, NeutralZone, BeingCapturedZone, BeingRetakenZone
+from tomasz.a_star import is_walkable
 from tomasz.modes.mode import Mode
 from tomasz.utils import distance_l1
 
-import logging
 log = logging.getLogger(__name__)
 log.disabled = False
+
 
 def are_all_zones_captured(tomasz_map):
     all_captured = True
@@ -26,6 +29,7 @@ def are_all_zones_captured(tomasz_map):
 
     return all_captured
 
+
 def get_closest_zone(tomasz_map):
     closest_zone = None
     closest_distance = float('inf')
@@ -41,17 +45,24 @@ def get_closest_zone(tomasz_map):
     return closest_zone
 
 
-def get_closest_tile_at_zone(tomasz_map, zone)->Tuple[int, int]:
+def get_closest_tile_at_zone(tomasz_map, zone) -> Tuple[int, int]:
     zone_pos = tomasz_map.zones[chr(zone.index)].pos
     my_pos = tomasz_map.agent.position
-    closest_zone_pos = min(zone_pos, key=lambda x: distance_l1(x, my_pos))
-    return zone_pos, closest_zone_pos
+    closest_pos = None
+    for pos in zone_pos:
+        if not is_walkable(tomasz_map, pos, 0):
+            continue
+        if not closest_pos:
+            closest_pos = pos
+        elif distance_l1(my_pos, pos) < distance_l1(my_pos, closest_pos):
+            closest_pos = pos
+    return zone_pos, closest_pos
 
 
 class ZoneCaptureMode(Mode):
 
     def get_priority(self, tomasz_map, my_bot):
-        return (1-are_all_zones_captured(tomasz_map)) * 0.65
+        return (1 - are_all_zones_captured(tomasz_map)) * 0.65
 
     def get_action(self, tomasz_map, my_bot):
         closest_zone = get_closest_zone(tomasz_map)
@@ -66,11 +77,13 @@ class ZoneCaptureMode(Mode):
         # else:
         #     my_bot.movement.target = None
 
-        if tomasz_map.agent.position in zone_pos:
-            my_bot.movement.target = random.choice(zone_pos)
+        if tomasz_map.agent.position in zone_pos and not my_bot.movement.target:
+            available_pos = [pos for pos in zone_pos if
+                             pos != tomasz_map.agent.position and is_walkable(tomasz_map, pos, 0)]
+            my_bot.movement.target = random.choice(available_pos)
             log.warning(f"In the zone already, walk target: {my_bot.movement.target}")
-
         else:
-            log.warning(f"Not in the zone yet, target is : {my_bot.movement.target}")
+            log.warning(
+                f"Not in the zone yet, target is : {my_bot.movement.target}, my pos: {tomasz_map.agent.position}")
             my_bot.movement.target = closest_zone_pos
         return my_bot.movement.get_action(tomasz_map.agent)

@@ -191,6 +191,7 @@ class MovementSystem:
         log.info("Movement system initialized")
 
     def get_action(self, tomasz_agent: TomaszAgent) -> Movement | Rotation | None:
+        log.info("My position: " + str(tomasz_agent.position))
         if not self.target:
             log.info("nic nie robie opiedalam sie")
             return None
