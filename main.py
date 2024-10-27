@@ -53,11 +53,11 @@ class MyBot(HackathonBot):
 
     def next_move(self, game_state: GameState) -> ResponseAction:
         if self.map is None:
-            self.map = TomaszMapWithHistory(game_state.map)
+            self.map = TomaszMapWithHistory(game_state)
         else:
-            self.map.update(TomaszMap(game_state.map))
+            self.map.update(TomaszMap(game_state))
 
-        game_map = TomaszMap(game_state.map)
+        game_map = TomaszMap(game_state)
         self.agent.update_goals(get_goals(game_state))
         if not self.movement:
             self.movement = MovementSystem(game_map)
