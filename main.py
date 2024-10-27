@@ -1,4 +1,6 @@
 from hackathon_bot import *
+from tomasz.goap.goals.capture_zones import CaptureZonesGoal
+from tomasz.goap.goap_agent import GOAPAgent
 from tomasz.map import TomaszMap, TomaszAgent, TomaszMapWithHistory
 from tomasz.movement import MovementSystem
 
@@ -29,15 +31,21 @@ def get_current_zone(game_state: GameState, tomasz_agent: TomaszAgent):
     return None
 
 
+def get_goals(game_state: GameState):
+    return [CaptureZonesGoal(game_state)]
+
+
 class MyBot(HackathonBot):
     movement: MovementSystem | None
     is_capturing: bool = False
     target_zone: Zone | None = None
     wait: int = 0
     map: TomaszMapWithHistory = None
+    agent: GOAPAgent
 
     def __init__(self):
         self.movement = None
+        self.agent = GOAPAgent(self, [])
         super().__init__()
 
     def on_lobby_data_received(self, lobby_data: LobbyData) -> None:
@@ -50,27 +58,11 @@ class MyBot(HackathonBot):
             self.map.update(TomaszMap(game_state.map))
 
         game_map = TomaszMap(game_state.map)
+        self.agent.update_goals(get_goals(game_state))
         if not self.movement:
             self.movement = MovementSystem(game_map)
 
-        if self.wait > 0:
-            self.wait -= 1
-            return Pass()
-
-        if not self.movement.target and not self.is_capturing:
-            self.target_zone = get_closest_available_zone(game_state, game_map.agent)
-            if self.target_zone:
-                self.movement.target = (self.target_zone.x, self.target_zone.y)
-
-
-        current_zone = get_current_zone(game_state, game_map.agent)
-        if current_zone and current_zone.status == ZoneStatus.BEING_CAPTURED:
-            self.is_capturing = True
-
-        if self.is_capturing and current_zone and current_zone.status == ZoneStatus.CAPTURED:
-            self.is_capturing = False
-            self.target_zone = None
-            self.movement.target = None
+        self.agent.process(game_state, game_map)
 
         action = self.movement.get_action(game_map.agent)
         return action or Pass()
