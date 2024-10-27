@@ -16,6 +16,12 @@ class TomaszMapWithHistory(TomaszMap):
         #self.max_ticks_since_seen = 10
         self.danger = np.zeros(self.size)
 
+        self.lasers = [{**laser, "ticks_since_seen": 0} for laser in self.lasers]
+        self.bullets = [{**bullet, "ticks_since_seen": 0} for bullet in self.bullets]
+        self.tanks = [{**tank, "ticks_since_seen": 0} for tank in self.tanks]
+        self.mines = [{**mine, "ticks_since_seen": 0} for mine in self.mines]
+        self.items = [{**item, "ticks_since_seen": 0} for item in self.items]
+        
     def update(self, new_map: TomaszMap):
         self._update_entities_lists(new_map)
         self._update_entities_grid(new_map)
@@ -26,16 +32,29 @@ class TomaszMapWithHistory(TomaszMap):
     def _update_entities_lists(self, new_map: TomaszMap):
         # walls don't change
         self.zones = new_map.zones
-
         self.agent = new_map.agent
         self.visible = new_map.visible
         self.visible_arr = new_map.visible_arr
 
-        self.lasers = new_map.lasers
-        self.bullets = new_map.bullets
-        self.tanks = new_map.tanks
-        self.mines = new_map.mines
-        self.items = new_map.items
+        self.lasers = []
+        self.bullets = []
+        self.tanks = []
+        self.mines = []
+        self.items = []
+        for i in range(self.size[0]):
+            for j in range(self.size[1]):
+                for ent in self.entities_grid[i, j]:
+                    since_seen = self.ticks_since_seen[i, j]
+                    if ent['type'] == 'laser':
+                        self.lasers.append({**ent, "ticks_since_seen": since_seen})
+                    elif ent['type'] == 'bullet':
+                        self.bullets.append({**ent, "ticks_since_seen": since_seen})
+                    elif ent['type'] == 'tank':
+                        self.tanks.append({**ent, "ticks_since_seen": since_seen})
+                    elif ent['type'] == 'mine':
+                        self.mines.append({**ent, "ticks_since_seen": since_seen})
+                    elif ent['type'] == 'item':
+                        self.items.append({**ent, "ticks_since_seen": since_seen})
     
     def _update_entities_grid(self, new_map: TomaszMap):
         # TODO bullets and lasers may need special handling
@@ -57,7 +76,8 @@ class TomaszMapWithHistory(TomaszMap):
                     entities = self.entities_grid[x, y]
                     entity = entities[0]
 
-                    if entity['type'] in ['bullet', 'laser', 'agent_tank', 'double_bullet']:
+                    if entity['type'] in ['bullet', 'laser']:
+                        # we dont want to remember bullets and lasers that are not visible
                         self.entities_grid[x, y] = []
 
     def _update_danger(self):

@@ -8,8 +8,7 @@ import os
 import random
 
 from hackathon_bot import *
-from tomasz.map_parser import TomaszMap
-from tomasz.map_with_history import TomaszMapWithHistory
+from tomasz.map import TomaszMap, TomaszMapWithHistory
 import time
 
 

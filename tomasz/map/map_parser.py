@@ -69,17 +69,17 @@ class TomaszMap:
             entity_dict = {'type': 'laser', 'pos': (x, y), 'ori': entity.orientation}
             self.lasers.append(entity_dict)
         elif isinstance(entity, DoubleBullet):
-            entity_dict = {'type': 'double_bullet', 'pos': (x, y), 'dir': entity.direction}
+            entity_dict = {'type': 'bullet', 'double':True, 'pos': (x, y), 'dir': entity.direction}
             self.bullets.append(entity_dict)
-        elif isinstance(entity, Bullet):
-            entity_dict = {'type': 'bullet', 'pos': (x, y), 'dir': entity.direction}
+        elif isinstance(entity, Bullet, ):
+            entity_dict = {'type': 'bullet', 'double':False, 'pos': (x, y), 'dir': entity.direction}
             self.bullets.append(entity_dict)
         elif isinstance(entity, AgentTank,):
-            entity_dict = {'type': 'agent_tank', 'pos': (x, y), 'dir': entity.direction, 'turret_dir': entity.turret.direction}
+            entity_dict = {'type': 'tank', 'agent': True, 'pos': (x, y), 'dir': entity.direction, 'turret_dir': entity.turret.direction}
             self.agent = TomaszAgent(entity, (y, x))
             self.tanks.append(entity_dict)
         elif isinstance(entity, PlayerTank):
-            entity_dict = {'type': 'player_tank', 'pos': (x, y), 'dir': entity.direction, 'turret_dir': entity.turret.direction}
+            entity_dict = {'type': 'tank', 'agent': False, 'pos': (x, y), 'dir': entity.direction, 'turret_dir': entity.turret.direction}
             self.tanks.append(entity_dict)
         elif isinstance(entity, Mine):
             entity_dict = {'type': 'mine', 'pos': (x, y), 'exploded': entity.exploded}
@@ -91,7 +91,7 @@ class TomaszMap:
                 SecondaryItemType.MINE: 'item_mine',
                 SecondaryItemType.RADAR: 'item_radar'
             }.get(entity.type, "item_unknown")
-            entity_dict = {'type': item_type, 'pos': (x, y)}
+            entity_dict = {'type': "item", "item_type":item_type, 'pos': (x, y)}
             self.items.append(entity_dict)
         
         self.entities_grid[x, y] = [entity_dict]
