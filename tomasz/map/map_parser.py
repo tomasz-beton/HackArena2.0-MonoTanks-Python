@@ -31,7 +31,9 @@ class TomaszAgent:
         self.position = position
 
 class TomaszMap:
-    def __init__(self, game_map: Map):
+    def __init__(self, game_state: GameState):
+        game_map = game_state.map
+        self.game_state = game_state
         self.size = (len(game_map.tiles), len(game_map.tiles[0]))
         self.agent = None
         self.initialized = False

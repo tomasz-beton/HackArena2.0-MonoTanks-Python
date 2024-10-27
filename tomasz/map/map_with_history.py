@@ -21,6 +21,7 @@ class TomaszMapWithHistory(TomaszMap):
         self._update_entities_grid(new_map)
         self._update_clenup()
         self._update_danger()
+        self.game_state = new_map.game_state
 
     def _update_entities_lists(self, new_map: TomaszMap):
         # walls don't change
