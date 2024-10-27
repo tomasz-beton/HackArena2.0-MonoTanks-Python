@@ -7,7 +7,7 @@ from tomasz.a_star import a_star
 from tomasz.map import TomaszAgent, TomaszMap, TomaszMapWithHistory
 
 log = logging.getLogger(__name__)
-log.disabled = True
+log.disabled = False
 
 
 def get_move_delta(current, next):
@@ -182,6 +182,8 @@ class MovementSystem:
     target: (int, int) = None
     tomasz_map: TomaszMapWithHistory = None
     target_reached: bool = False
+    path_finding_failed: bool = False
+    fails_counter: int = 0
     _next_position: (int, int) = None
 
     def __init__(self, tomasz_map: TomaszMapWithHistory):
@@ -189,19 +191,27 @@ class MovementSystem:
         log.info("Movement system initialized")
 
     def get_action(self, tomasz_agent: TomaszAgent) -> Movement | Rotation | None:
+        log.info("My position: " + str(tomasz_agent.position))
         if not self.target:
             log.info("nic nie robie opiedalam sie")
             return None
 
         if not self.path:
             log.info(f"Looking for path from {tomasz_agent.position} to {self.target}")
-            self.path = a_star(self.tomasz_map, tomasz_agent.position, self.target)
+            allow_danger = self.fails_counter > 3
+            if allow_danger:
+                log.warning("Allowing dangerous path")
+            self.path = a_star(self.tomasz_map, tomasz_agent.position, self.target, allow_danger)
             if not self.path:
                 log.info("Failed to find path :(")
+                self.path_finding_failed = True
+                self.fails_counter += 1
                 self.target_reached = False
                 self.target = None
                 return None
             else:
+                self.path_finding_failed = False
+                self.fails_counter = 0
                 self.target_reached = False
                 log.info("I have a path now! " + str(self.path))
 

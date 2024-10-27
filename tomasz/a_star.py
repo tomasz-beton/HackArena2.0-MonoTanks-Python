@@ -87,12 +87,13 @@ def _reconstruct_path(came_from, current):
     return total_path[:-1][::-1]
 
 
-def a_star(tomasz_map: TomaszMapWithHistory, start: (int, int), goal: (int, int), heuristic=euclidean_distance):
+def a_star(tomasz_map: TomaszMapWithHistory, start: (int, int), goal: (int, int), ignore_danger=False, heuristic=euclidean_distance):
     """
     A* algorithm to find the shortest path between two points on the map.
 
     Parameters
     ----------
+    ignore_danger
     tomasz_map: TomaszMapWithHistory
         Parsed map. Containing the occupancy grid (walls_arr). Rows[Columns]
     start: (int, int)
@@ -129,6 +130,10 @@ def a_star(tomasz_map: TomaszMapWithHistory, start: (int, int), goal: (int, int)
     # by passing by that node. That value is partly known, partly heuristic.
     f_score = {start: heuristic(start, goal)}
 
+    danger_threshold = 0.2
+    if ignore_danger:
+        danger_threshold = 100.0
+
     while open_set:
         # Get the node in open_set having the lowest f_score[] value
         current = min(open_set, key=lambda x: f_score[x])
@@ -142,7 +147,7 @@ def a_star(tomasz_map: TomaszMapWithHistory, start: (int, int), goal: (int, int)
         for dx, dy, _ in movements:
             neighbor = current[0] + dx, current[1] + dy
 
-            if not is_walkable(tomasz_map, neighbor):
+            if not is_walkable(tomasz_map, neighbor, danger_threshold):
                 continue
 
             # The distance from start to a neighbor
