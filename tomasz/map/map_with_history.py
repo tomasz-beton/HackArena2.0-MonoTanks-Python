@@ -44,7 +44,10 @@ class TomaszMapWithHistory(TomaszMap):
         for i in range(self.size[0]):
             for j in range(self.size[1]):
                 for ent in self.entities_grid[i, j]:
-                    since_seen = self.ticks_since_seen[i, j]
+                    since_seen = int(self.ticks_since_seen[i, j])
+                    if since_seen < 0:
+                        since_seen = 31337
+                        #ovefrflow fix
                     if ent['type'] == 'laser':
                         self.lasers.append({**ent, "ticks_since_seen": since_seen})
                     elif ent['type'] == 'bullet':

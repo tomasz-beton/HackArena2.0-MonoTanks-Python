@@ -69,7 +69,7 @@ class MyBot(HackathonBot):
             self.alignment = AlignmentSystem(self.map, self.movement)
 
         if self.map.last_danger_map_change == 0:
-            log.warning("Danger map updated")
+            #log.warning("Danger map updated")
             self.movement.update_map(self.map)
 
         if self.died and not game_state.my_agent.is_dead:
@@ -100,13 +100,15 @@ class MyBot(HackathonBot):
     def _get_best_mode(self):
         best_mode = self.modes[0]
         best_priority = 0
-        log.info(f"Picking best mode from: {str(self.modes)}")
+        #log.info(f"Picking best mode from: {str(self.modes)}")
+        priorities = []
         for mode in self.modes:
             priority = mode.get_priority(self.map, self)
-            log.info(f"mode: {mode} has priority: {priority}")
+            priorities.append((mode, priority))
             if priority > best_priority:
                 best_mode = mode
                 best_priority = priority
+        log.info(f"Priorities: {priorities}")
         log.info(f"Best mode: {best_mode}")
         return best_mode
 

@@ -20,6 +20,6 @@ class FightMode(Mode):
 
     def get_action(self, tomasz_map, my_bot):
         if self.closest_tank:
-            my_bot.alignment.set_target(self.closest_tank)
+            my_bot.alignment.set_target(self.closest_tank["pos"])
 
-        return my_bot.movement.get_action(tomasz_map.agent) or AbilityUse(Ability.FIRE_BULLET)
+        return my_bot.alignment.get_action() or AbilityUse(Ability.FIRE_BULLET)
